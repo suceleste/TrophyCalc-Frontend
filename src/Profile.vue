@@ -85,25 +85,46 @@ export default defineComponent({
   },
   methods: {
     async fetchAllData() {
-      this.loading = true;
-      try {
-        // Appel A: Récupération du Profil
-        const profileResponse = await axios.get(`${this.backendBaseUrl}/user/${this.steamId}/profile`);
-        this.profile = profileResponse.data;
+        this.loading = true;
+        this.error = null; // Réinitialiser les erreurs à chaque tentative
+        
+        try {
+            // Appel 1: Récupération du Profil
+            const profileResponse = await axios.get(`${this.backendBaseUrl}/user/${this.steamId}/profile`);
+            this.profile = profileResponse.data;
 
-        // Appel B: Récupération des Jeux
-        const gamesResponse = await axios.get(`${this.backendBaseUrl}/user/${this.steamId}/games`);
-        this.games = gamesResponse.data.games;
+            // Appel 2: Récupération des Jeux
+            const gamesResponse = await axios.get(`${this.backendBaseUrl}/user/${this.steamId}/games`);
+            this.games = gamesResponse.data.games;
 
-      } catch (err: any) {
-        console.error("Erreur de récupération des données:", err);
-        this.error = "Impossible de charger les données du profil ou de la bibliothèque.";
-        // Si l'erreur est critique (ex: ID invalide), on déconnecte
-        localStorage.removeItem('steam_id_64');
-        // this.router.push({ name: 'Home' }); 
-      } finally {
-        this.loading = false;
-      }
+        } catch (err: any) {
+            console.error("Erreur de récupération des données:", err);
+
+            // 1. Erreur de réseau ou HTTP (ex: serveur éteint, 404, 500)
+            if (err.response) {
+                // Erreur reçue du serveur Laravel
+                const status = err.response.status;
+                
+                if (status === 404) {
+                    this.error = "Profil Steam introuvable ou SteamID invalide.";
+                } else if (status === 401 || status === 403) {
+                    this.error = "Accès refusé. Votre profil Steam doit être Public (y compris les détails du jeu).";
+                } else {
+                    this.error = `Erreur du serveur (${status}). Impossible de récupérer les données.`;
+                }
+            } else if (err.request) {
+                // Erreur de connexion (Backend hors ligne)
+                this.error = "Erreur de connexion. Veuillez vérifier si le serveur Backend (Laravel) est démarré.";
+            } else {
+                // Autres erreurs
+                this.error = "Une erreur inconnue s'est produite.";
+            }
+            
+            // En cas d'erreur critique, on supprime l'ID local pour forcer une reconnexion.
+            localStorage.removeItem('steam_id_64');
+        } finally {
+            this.loading = false;
+        }
     },
     viewAchievements(appId: string) {
       // Naviguer vers la nouvelle route GameAchievements

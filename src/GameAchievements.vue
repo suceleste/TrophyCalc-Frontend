@@ -6,7 +6,13 @@
       Chargement des trophées pour {{ gameName }}...
     </div>
 
-    <div v-else-if="!error">
+    <div v-else-if="error" class="error-box">
+        <h2>Erreur de Chargement :</h2>
+        <p class="error-message">{{ error }}</p>
+        <p v-if="totalCount === 0" class="info-message">Ce jeu ne semble pas supporter les succès Steam ou les données sont privées.</p>
+    </div>
+
+    <div v-else>
       <header class="game-header">
         <h1>Trophées de {{ gameName }}</h1>
         <p class="summary">
@@ -24,11 +30,6 @@
         </div>
       </section>
     </div>
-
-    <p v-else class="error-message">
-      Erreur : {{ error }}
-      <span v-if="!loading && totalCount === 0"> (Ce jeu n'a peut-être pas de succès publics.)</span>
-    </p>
   </div>
 </template>
 
@@ -45,20 +46,20 @@ interface Achievement {
 
 export default defineComponent({
   name: 'GameAchievements',
-  // Récupère les props passées par l'URL
   props: {
     steamId: { type: String, required: true },
     appId: { type: String, required: true },
   },
   setup() {
+    // Utiliser localhost car nous l'avons aligné dans le routeur et les composants
     return {
       router: useRouter(),
-      backendBaseUrl: 'http://localhost:8000/api', // <-- ALIGNÉ sur localhost
+      backendBaseUrl: 'http://localhost:8000/api', 
     };
   },
   data() {
     return {
-      gameName: 'Jeu...',
+      gameName: 'Chargement...',
       achievements: [] as Achievement[],
       unlockedCount: 0,
       totalCount: 0,
@@ -75,12 +76,15 @@ export default defineComponent({
       this.loading = true;
       this.error = null;
       try {
+        // Appel à la route de succès : /user/{steamId}/achievements/{appId}
         const response = await axios.get(`${this.backendBaseUrl}/user/${this.steamId}/achievements/${this.appId}`);
         const data = response.data;
         
+        // Gérer le cas où le backend renvoie un statut 'info' (jeu non supporté)
         if (data.status === 'info') {
-            this.error = data.message;
             this.gameName = data.game_name;
+            this.totalCount = 0; // Aucun succès n'est trouvé
+            this.error = data.message;
             return;
         }
 
@@ -92,7 +96,11 @@ export default defineComponent({
 
       } catch (err: any) {
         console.error("Erreur de récupération des succès:", err);
-        this.error = "Impossible de charger les données de succès pour ce jeu.";
+         if (err.response) {
+            this.error = `Erreur du serveur (${err.response.status}). Impossible de récupérer les trophées.`;
+        } else {
+            this.error = "Erreur de connexion au Backend.";
+        }
       } finally {
         this.loading = false;
       }
@@ -105,15 +113,20 @@ export default defineComponent({
 .achievements-container {
   max-width: 900px;
   margin: 40px auto;
+  color: #c7d2e3;
 }
 .btn-back {
-  background: none;
-  border: 1px solid #66c0f4;
-  color: #66c0f4;
+  background-color: #383c42;
+  border: none;
+  color: white;
   padding: 8px 15px;
   border-radius: 5px;
   cursor: pointer;
   margin-bottom: 20px;
+  transition: background-color 0.2s;
+}
+.btn-back:hover {
+    background-color: #4f555e;
 }
 .game-header {
   text-align: center;
@@ -126,7 +139,10 @@ export default defineComponent({
     font-weight: bold;
 }
 .unlocked-count {
-    color: #a3ff78; /* Vert vif pour les succès */
+    color: #a3ff78;
+}
+.achievements-list {
+    margin-top: 20px;
 }
 .achievement-card {
   display: flex;
@@ -136,10 +152,9 @@ export default defineComponent({
   border-radius: 6px;
   margin-bottom: 10px;
   border-left: 5px solid transparent;
-  transition: border-left-color 0.3s;
 }
 .achievement-card.unlocked {
-  border-left-color: #a3ff78;
+  border-left-color: #a3ff78; /* Vert pour débloqué */
 }
 .status-icon {
   font-size: 1.5em;
@@ -153,5 +168,11 @@ export default defineComponent({
   margin: 5px 0 0;
   font-size: 0.9em;
   color: #a0aec0;
+}
+.error-box {
+    padding: 20px;
+    background-color: #4f1e1e;
+    border: 1px solid #d62d2d;
+    border-radius: 8px;
 }
 </style>
