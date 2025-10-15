@@ -1,15 +1,13 @@
 <template>
   <div id="app">
-    <h1>APP.VUE SE CHARGE !</h1>
     <RouterView /> 
   </div>
 </template>
+
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+// (Votre script peut être vide ou contenir les imports ici)
 </script>
 
-<template>
-  <RouterView />
-</template>
-
-<style scoped></style>
+<style>
+/* ... (Styles globaux) ... */
+</style>
