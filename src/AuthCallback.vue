@@ -24,11 +24,11 @@ onMounted(async () => { // <-- On rend la fonction 'async' pour pouvoir attendre
     // ==========================================================
 
     // Maintenant que le store est à jour, on redirige
-    router.push({ name: 'Home' })
+    router.push({ name: 'dashboard' })
 
   } else {
     console.error("Aucun token trouvé, redirection vers l'accueil.")
-    router.push({ name: 'Home' })
+    router.push({ name: 'dashboard' })
   }
 })
 </script>

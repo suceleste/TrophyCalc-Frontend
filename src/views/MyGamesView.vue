@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import { useAuthStore } from '@/stores/auth' // On importe notre tableau de bord
+import { useAuthStore } from '../stores/auth' // On importe notre tableau de bord
 
 // On récupère une instance du tableau de bord pour accéder au token
 const authStore = useAuthStore()
