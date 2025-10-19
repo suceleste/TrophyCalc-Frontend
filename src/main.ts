@@ -1,3 +1,5 @@
+import './assets/main.css'
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia' // <-- 1. ON IMPORTE LA FONCTION POUR CRÉER PINIA
 
