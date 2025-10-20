@@ -6,6 +6,7 @@ import Home from '../views/HomeView.vue';
 import AuthCallback from '../components/AuthCallback.vue';
 import MyGamesView from '../views/MyGamesView.vue';
 import DashboardView from '../views/DashboardView.vue';
+import GameAchievementsView from '../views/GameAchievementsView.vue';
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -24,6 +25,12 @@ const routes: Array<RouteRecordRaw> = [
     name: 'my-games',
     component: MyGamesView,
     props: true
+  },
+  {
+    path: '/games/:app_id/achievements',
+    name: 'game-achievements',
+    component: GameAchievementsView,
+    props: true,
   },
   {
     path: "/dashboard",
