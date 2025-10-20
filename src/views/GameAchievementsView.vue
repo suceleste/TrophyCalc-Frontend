@@ -103,20 +103,21 @@ onMounted(async () => {
           'bg-gray-800/60 border rounded-lg p-4 flex items-start space-x-4 transition-opacity',
           ach.achieved
             ? 'border-green-500/40'
-            : 'border-gray-700/50 opacity-50 hover:opacity-100' // Moins opaque au survol
+            : 'border-gray-700/50 opacity-60 hover:opacity-100'
         ]"
       >
         <img
           :src="ach.achieved ? ach.icon : ach.icon_gray"
           :alt="`Icône ${ach.name}`"
-          class="w-16 h-16 flex-shrink-0" loading="lazy"
-        />
-
+          class="w-16 h-16 flex-shrink-0 border border-slate-700 rounded" loading="lazy"
+          onerror="this.style.display='none'" />
         <div class="flex-grow">
           <h3 :class="['text-lg font-semibold', ach.achieved ? 'text-green-300' : 'text-slate-200']">
-            {{ ach.name }} </h3>
+            {{ ach.name }}
+          </h3>
           <p class="text-sm text-slate-400 mt-1">
-            {{ ach.description }} </p>
+            {{ ach.description }}
+          </p>
           <p v-if="ach.achieved" class="text-xs text-green-500 mt-2">
             Débloqué le : {{ formatTimestamp(ach.unlock_time) }}
           </p>
