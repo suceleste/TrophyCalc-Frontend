@@ -2,8 +2,8 @@
 
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 
-import Home from '../views/HomeView.vue'; 
-import AuthCallback from '../AuthCallback.vue'; 
+import Home from '../views/HomeView.vue';
+import AuthCallback from '../components/AuthCallback.vue';
 import MyGamesView from '../views/MyGamesView.vue';
 import DashboardView from '../views/DashboardView.vue';
 
@@ -15,15 +15,15 @@ const routes: Array<RouteRecordRaw> = [
     component: Home
   },
   {
-    path: '/auth/callback', 
-    name: 'AuthCallback',
-    component: AuthCallback 
+    path: '/auth/callback',
+    name: 'authCallback',
+    component: AuthCallback
   },
   {
     path: '/my-games',
     name: 'my-games',
     component: MyGamesView,
-    props: true 
+    props: true
   },
   {
     path: "/dashboard",

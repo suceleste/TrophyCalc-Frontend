@@ -1,53 +1,62 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue' // <-- Ajoute 'watch'
 import { defineStore } from 'pinia'
-import axios from 'axios' // On importe axios pour faire nos appels API
+import axios from 'axios'
 
-// On définit notre store 'auth'
 export const useAuthStore = defineStore('auth', () => {
-  
-  // === 1. L'ÉTAT (STATE) ===
-  const user = ref(null) // Stockera les infos de l'utilisateur (nom, avatar...)
-  
-  // On lit le token depuis le localStorage au démarrage.
-  // Si le token existe, il sera stocké ici, sinon ce sera `null`.
+  const user = ref(null)
   const token = ref(localStorage.getItem('auth_token'))
 
+  const isLoggedIn = computed(() => !!token.value && !!user.value)
 
-  // === 2. LES "GETTERS" ===
-  // L'indicateur "Connecté ?"
-  const isLoggedIn = computed(() => !!user.value)
-
-
-  // === 3. LES ACTIONS ===
-
-  /**
-   * Récupère les informations de l'utilisateur depuis l'API en utilisant le token.
-   */
-  const fetchUser = async () => {
-    if (token.value) {
-      try {
-        // On configure axios pour qu'il envoie TOUJOURS le token dans les en-têtes.
-        // C'est comme montrer son "bracelet de festival" à chaque requête.
-        const response = await axios.get('http://127.0.0.1:8000/api/user', {
-          headers: {
-            'Authorization': `Bearer ${token.value}`
-          }
-        })
-        
-        // Si l'appel réussit, on met à jour l'état `user` avec les données reçues.
-        user.value = response.data
-
-      } catch (error) {
-        // Si le token est invalide ou expiré, l'API renverra une erreur.
-        // On nettoie tout pour déconnecter l'utilisateur.
-        console.error("Erreur lors de la récupération de l'utilisateur:", error)
-        user.value = null
-        token.value = null
-        localStorage.removeItem('auth_token')
-      }
+  function setToken(newToken: string | null) {
+    console.log('[AuthStore setToken] Mise à jour du token:', newToken); // Log
+    token.value = newToken
+    if (newToken) {
+      localStorage.setItem('auth_token', newToken)
+    } else {
+      localStorage.removeItem('auth_token')
     }
   }
 
-  // On rend tout ça accessible au reste de l'application
-  return { user, token, isLoggedIn, fetchUser }
+  async function fetchUser() {
+    if (!token.value) {
+      console.log('[AuthStore] fetchUser: Pas de token, annulation.');
+      user.value = null
+      return
+    }
+
+    try {
+      console.log('[AuthStore] fetchUser: Appel API /user...');
+      const response = await axios.get('http://127.0.0.1:8000/api/user', {
+        headers: {
+          'Authorization': `Bearer ${token.value}`,
+          'Accept': 'application/json'
+        }
+      })
+      user.value = response.data
+      console.log('[AuthStore] fetchUser: Utilisateur récupéré:', user.value);
+    } catch (error) {
+      console.error('[AuthStore] fetchUser: ERREUR API !', error);
+      setToken(null)
+      user.value = null
+    }
+  }
+
+  function logout() { /* ... */ }
+
+  // ========================================================
+  // OBSERVATEUR : Lance fetchUser si le token apparaît
+  watch(token, (newToken) => {
+    console.log('[AuthStore Watcher] Le token a changé:', newToken); // Log
+    if (newToken && !user.value) { // Si on a un nouveau token ET pas encore d'utilisateur
+      console.log('[AuthStore Watcher] Token présent, utilisateur absent => Appel fetchUser.'); // Log
+      fetchUser();
+    } else if (!newToken) { // Si le token disparaît (logout)
+        user.value = null; // On s'assure que user est bien null
+        console.log('[AuthStore Watcher] Token retiré, utilisateur mis à null.'); // Log
+    }
+  }, { immediate: true }) // immediate: true => lance le watch une fois au démarrage
+  // ========================================================
+
+  return { user, token, isLoggedIn, setToken, fetchUser, logout }
 })
