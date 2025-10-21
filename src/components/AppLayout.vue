@@ -77,13 +77,31 @@ const performSearch = () => {
                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
                      transition-all duration-200 ease-in-out z-50"
             >
+              <RouterLink
+                :to="{ name: 'dashboard' }"
+                class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                active-class="bg-purple-600/30 text-purple-300"
+              >
+                Tableau de Bord
+              </RouterLink>
+
+              <RouterLink
+                :to="{ name: 'my-games' }"
+                class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                active-class="bg-purple-600/30 text-purple-300"
+              >
+                Mes Jeux
+              </RouterLink>
+
+              <div class="border-t border-gray-700 my-1"></div>
+
               <button
                 @click="handleLogout"
                 class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600/20 hover:text-red-300 transition-colors duration-150"
               >
                 Se déconnecter
               </button>
-              </div>
+            </div>
           </div>
 
           <div v-else>
