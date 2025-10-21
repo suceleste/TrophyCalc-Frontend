@@ -1,10 +1,27 @@
 <script setup lang="ts">
-import { useAuthStore } from '../stores/auth';
-import { RouterLink } from 'vue-router';
-import { ref } from 'vue'; // On importe ref pour la barre de recherche
+import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
+import { RouterLink, useRouter } from 'vue-router'; // Ajoute useRouter
+import { ref } from 'vue';
 
 const authStore = useAuthStore();
-const searchQuery = ref(''); // Variable pour stocker la recherche
+const searchQuery = ref(''); // Variable pour la barre de recherche (future utilisation)
+const router = useRouter(); // Outil pour rediriger
+
+// Fonction pour gérer la déconnexion
+const handleLogout = () => {
+  console.log('Déconnexion déclenchée...'); // Log pour le débogage
+  authStore.logout(); // Appelle l'action du store (efface token + user + localStorage)
+  router.push({ name: 'home' }); // Redirige vers la page d'accueil
+};
+
+// Fonction pour gérer la recherche (future utilisation)
+const performSearch = () => {
+  if (searchQuery.value.trim()) {
+    console.log(`Recherche pour : "${searchQuery.value}"`);
+    // Pour l'instant, ne fait rien, mais on pourrait rediriger
+    // router.push({ name: 'search-results', query: { q: searchQuery.value } });
+  }
+};
 </script>
 
 <template>
@@ -17,7 +34,7 @@ const searchQuery = ref(''); // Variable pour stocker la recherche
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-24">
 
         <RouterLink
-          :to="{ name: authStore.isLoggedIn ? 'dashboard' : 'home' }"
+          :to="{ name: 'home' }"
           class="text-4xl font-extrabold tracking-tighter text-white transition-all duration-300 ease-in-out
                  hover:text-purple-400 hover:drop-shadow-[0_0_15px_rgba(192,132,252,0.7)]"
         >
@@ -30,7 +47,7 @@ const searchQuery = ref(''); // Variable pour stocker la recherche
               type="text"
               v-model="searchQuery"
               placeholder="Rechercher un jeu..."
-              class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
+              @keyup.enter="performSearch" class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
                      placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-300"
             />
             <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,17 +57,32 @@ const searchQuery = ref(''); // Variable pour stocker la recherche
         </div>
 
         <div class="flex items-center space-x-4">
-          <div v-if="authStore.isLoggedIn && authStore.user" class="flex items-center space-x-3">
-            <span class="font-semibold text-white hidden lg:block">{{ authStore.user.name }}</span>
-            <div class="relative group">
-              <img
-                :src="authStore.user.avatar"
-                class="w-14 h-14 rounded-lg border-2 border-gray-700
-                       transition-all duration-300 ease-in-out
-                       group-hover:border-purple-500 group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(192,132,252,0.5)] cursor-pointer"
-                alt="Avatar de l'utilisateur"
-              />
-              <span class="absolute -bottom-1.5 -right-1.5 bg-green-500 w-4 h-4 rounded-full border-2 border-black ring-1 ring-gray-700"></span>
+          <div v-if="authStore.isLoggedIn && authStore.user" class="relative group">
+            <div class="flex items-center space-x-3 cursor-pointer">
+              <span class="font-semibold text-white hidden lg:block">{{ authStore.user.name }}</span>
+              <div class="relative">
+                <img
+                  :src="authStore.user.avatar"
+                  class="w-14 h-14 rounded-lg border-2 border-gray-700
+                         transition-all duration-300 ease-in-out
+                         group-hover:border-purple-500 group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(192,132,252,0.5)]"
+                  alt="Avatar de l'utilisateur"
+                />
+                <span class="absolute -bottom-1.5 -right-1.5 bg-green-500 w-4 h-4 rounded-full border-2 border-black ring-1 ring-gray-700"></span>
+              </div>
+            </div>
+
+            <div
+              class="absolute top-full right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5
+                     opacity-0 invisible group-hover:opacity-100 group-hover:visible
+                     transition-all duration-200 ease-in-out z-50"
+            >
+              <button
+                @click="handleLogout"
+                class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600/20 hover:text-red-300 transition-colors duration-150"
+              >
+                Se déconnecter
+              </button>
               </div>
           </div>
 
@@ -66,9 +98,9 @@ const searchQuery = ref(''); // Variable pour stocker la recherche
         </div>
       </nav>
     </header>
+
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <slot />
-    </main>
+      <slot /> </main>
 
   </div>
 </template>
