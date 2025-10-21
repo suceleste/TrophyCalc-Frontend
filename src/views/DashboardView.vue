@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'; // onMounted n'est plus nécessaire ici
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '../stores/auth';
 import { RouterLink } from 'vue-router';
 import axios from 'axios';
 

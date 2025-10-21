@@ -42,7 +42,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout() { /* ... */ }
+  function logout() {
+    console.log('[AuthStore] logout: Déconnexion...');
+    setToken(null); // Doit appeler setToken(null) pour effacer aussi localStorage
+    user.value = null;
+  }
 
   // ========================================================
   // OBSERVATEUR : Lance fetchUser si le token apparaît
