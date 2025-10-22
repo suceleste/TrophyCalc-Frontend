@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { useAuthStore } from '../stores/auth';
+import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
 import { RouterLink } from 'vue-router';
 import axios from 'axios';
 
@@ -11,14 +11,19 @@ const globalCompletion = ref<number | null>(null);
 const isLoadingCompletion = ref(false);
 const completionError = ref<string | null>(null);
 
-// NOUVEAU: États pour les derniers succès
-const latestAchievements = ref<any[]>([]); // Pour stocker les 5 derniers
+// États pour les derniers succès
+const latestAchievements = ref<any[]>([]);
 const isLoadingLatest = ref(false);
 const latestError = ref<string | null>(null);
 
-// Fonction pour charger la complétion globale
+// États pour les jeux presque terminés
+const nearlyCompletedGames = ref<any[]>([]);
+const isLoadingNearlyCompleted = ref(false);
+const nearlyCompletedError = ref<string | null>(null);
+
+// --- Fonction pour charger la complétion globale ---
 const fetchGlobalCompletion = async () => {
-  if (!authStore.token) { completionError.value = "Non connecté."; return; }
+  if (!authStore.token) { completionError.value = "Non connecté."; isLoadingCompletion.value = false; return; }
   isLoadingCompletion.value = true;
   completionError.value = null;
   console.log("Dashboard: Début fetchGlobalCompletion...");
@@ -37,9 +42,9 @@ const fetchGlobalCompletion = async () => {
   }
 };
 
-// NOUVEAU: Fonction pour charger les derniers succès
+// --- Fonction pour charger les derniers succès ---
 const fetchLatestAchievements = async () => {
-  if (!authStore.token) { latestError.value = "Non connecté."; return; }
+  if (!authStore.token) { latestError.value = "Non connecté."; isLoadingLatest.value = false; return; }
   isLoadingLatest.value = true;
   latestError.value = null;
   console.log("Dashboard: Début fetchLatestAchievements...");
@@ -58,22 +63,43 @@ const fetchLatestAchievements = async () => {
   }
 };
 
-// Observateur : Lance les deux fetchs quand l'utilisateur est chargé
+// --- Fonction pour charger les jeux presque terminés ---
+const fetchNearlyCompletedGames = async () => {
+  if (!authStore.token) { nearlyCompletedError.value = "Non connecté."; isLoadingNearlyCompleted.value = false; return; }
+  isLoadingNearlyCompleted.value = true;
+  nearlyCompletedError.value = null;
+  console.log("Dashboard: Début fetchNearlyCompletedGames...");
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/api/user/games/nearly-completed', {
+      headers: { 'Authorization': `Bearer ${authStore.token}`, 'Accept': 'application/json' }
+    });
+    nearlyCompletedGames.value = response.data || [];
+    console.log("Dashboard: Jeux presque terminés reçus:", nearlyCompletedGames.value);
+  } catch (err: any) {
+    console.error("Dashboard: Erreur fetchNearlyCompletedGames:", err);
+    nearlyCompletedError.value = "Impossible de charger.";
+    nearlyCompletedGames.value = [];
+  } finally {
+    isLoadingNearlyCompleted.value = false;
+  }
+};
+
+// --- Observateur : Lance les TROIS fetchs ---
 watch(
   () => authStore.user,
   (newUser, oldUser) => {
-    console.log(`Dashboard Watcher: User a changé. Ancien: ${!!oldUser}, Nouveau: ${!!newUser}`);
+    // Si l'utilisateur vient d'être chargé (passe de null à objet)
     if (newUser && !oldUser) {
       console.log("Dashboard Watcher: Utilisateur chargé, lancement des fetchs.");
-      // On lance les deux appels
       fetchGlobalCompletion();
-      fetchLatestAchievements(); // <-- Appel de la nouvelle fonction
+      fetchLatestAchievements();
+      fetchNearlyCompletedGames();
     }
   },
-  { immediate: true }
+  { immediate: true } // Vérifie aussi au montage initial
 );
 
-// Fonction pour formater la date (copiée ici aussi)
+// --- Fonction utilitaire pour formater la date ---
 const formatTimestamp = (timestamp: number | null) => {
   if (!timestamp) return '';
   const date = new Date(timestamp * 1000);
@@ -84,8 +110,7 @@ const formatTimestamp = (timestamp: number | null) => {
 
 <template>
   <div>
-    <div v-if="authStore.isLoadingUser && !authStore.user" class="text-center py-20">
-      <p class="text-slate-400 animate-pulse text-lg">Chargement de votre tableau de bord...</p>
+    <div v-if="!authStore.user && authStore.token" class="text-center py-20"> <p class="text-slate-400 animate-pulse text-lg">Chargement de votre tableau de bord...</p>
     </div>
 
     <div v-else-if="authStore.isLoggedIn && authStore.user" class="space-y-10">
@@ -137,22 +162,47 @@ const formatTimestamp = (timestamp: number | null) => {
 
              <div class="bg-gray-800/50 p-6 rounded-xl border border-purple-500/30">
                  <h3 class="text-xl font-semibold text-white mb-4">Derniers Succès Débloqués</h3>
-
                  <div v-if="isLoadingLatest" class="text-slate-400 animate-pulse">Chargement...</div>
                  <div v-else-if="latestError" class="text-red-400">{{ latestError }}</div>
-                 <ul v-else-if="latestAchievements.length > 0" class="space-y-3">
-                    <li v-for="ach in latestAchievements" :key="`${ach.app_id}-${ach.api_name}`" class="text-sm border-b border-gray-700/50 pb-2 last:border-b-0">
-                       <RouterLink :to="{ name: 'game-achievements', params: { app_id: ach.app_id } }" class="hover:text-purple-300 transition-colors block">
-                         <span class="font-medium text-white">{{ ach.name }}</span> <span class="text-slate-400 text-xs block">{{ ach.game_name }}</span>
-                       </RouterLink>
-                       <span class="text-xs text-slate-500 block mt-0.5">{{ formatTimestamp(ach.unlock_time) }}</span>
+                 <ul v-else-if="latestAchievements.length > 0" class="space-y-4">
+                    <li v-for="ach in latestAchievements" :key="`${ach.app_id}-${ach.api_name}`" class="flex items-start space-x-3 border-b border-gray-700/50 pb-3 last:border-b-0">
+                       <img v-if="ach.icon" :src="ach.icon" :alt="`Icône ${ach.name}`" class="w-12 h-12 flex-shrink-0 border border-slate-600 rounded" loading="lazy" onerror="this.style.display='none'"/>
+                       <div v-else class="w-12 h-12 flex-shrink-0 bg-gray-700 rounded border border-slate-600"></div>
+                       <div class="flex-grow min-w-0">
+                          <RouterLink :to="{ name: 'game-achievements', params: { app_id: ach.app_id } }" class="hover:text-purple-300 transition-colors block">
+                            <span class="font-semibold text-base text-white leading-tight block">{{ ach.name }}</span>
+                            <span class="text-slate-400 text-xs block">{{ ach.game_name }}</span>
+                          </RouterLink>
+                          <span class="text-xs text-slate-500 block mt-0.5">{{ formatTimestamp(ach.unlock_time) }}</span>
+                       </div>
                     </li>
                  </ul>
                  <p v-else class="text-slate-400">Aucun succès récent trouvé.</p>
              </div>
+
              <div class="bg-gray-800/50 p-6 rounded-xl border border-purple-500/30">
-                 <h3 class="text-xl font-semibold text-white mb-4">Jeux Presque Terminés</h3>
-                 <p class="text-slate-400">(Liste bientôt disponible ici...)</p>
+                 <h3 class="text-xl font-semibold text-white mb-4">Jeux Presque Terminés (&gt;80%)</h3>
+                 <div v-if="isLoadingNearlyCompleted" class="text-slate-400 animate-pulse">Chargement...</div>
+                 <div v-else-if="nearlyCompletedError" class="text-red-400">{{ nearlyCompletedError }}</div>
+                 <ul v-else-if="nearlyCompletedGames.length > 0" class="space-y-3">
+                     <li
+                       v-for="game in nearlyCompletedGames"
+                       :key="game.app_id"
+                       class="text-sm border-b border-gray-700/50 pb-2 last:border-b-0"
+                    >
+                       <RouterLink :to="{ name: 'game-achievements', params: { app_id: game.app_id } }" class="flex items-center space-x-3 group">
+                         <img v-if="game.icon_url" :src="game.icon_url" :alt="game.name" class="w-8 h-8 rounded flex-shrink-0"/>
+                         <div v-else class="w-8 h-8 rounded bg-gray-700 flex-shrink-0"></div>
+                         <div class="flex-grow min-w-0">
+                           <span class="font-medium text-white group-hover:text-purple-300 transition-colors block truncate" :title="game.name">{{ game.name }}</span>
+                           <span class="text-xs text-slate-400 block">
+                             {{ game.unlocked }} / {{ game.total }} ({{ game.percentage }}%)
+                           </span>
+                         </div>
+                       </RouterLink>
+                     </li>
+                 </ul>
+                 <p v-else class="text-slate-400">Aucun jeu proche de 100% pour le moment.</p>
              </div>
          </div>
       </section>
