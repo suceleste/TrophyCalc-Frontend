@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
 import { RouterLink, useRouter } from 'vue-router';
-// Pas besoin de 'ref' ici car searchQuery vient du store
+import { ref } from 'vue'; // On a besoin de 'ref' pour la barre de recherche locale
 
-const authStore = useAuthStore(); // Récupère le store (qui contient searchQuery)
+const authStore = useAuthStore();
+const searchQuery = ref(''); // Variable LOCALE pour stocker la recherche de la barre
 const router = useRouter();
 
 // Fonction pour gérer la déconnexion
@@ -13,9 +14,20 @@ const handleLogout = () => {
   router.push({ name: 'home' });
 };
 
-// Pas besoin de fonction performSearch ici,
-// car v-model met à jour le store en temps réel,
-// et MyGamesView utilise une computed property basée sur le store.
+// Fonction pour lancer la recherche globale et rediriger
+const performSearch = () => {
+  const query = searchQuery.value.trim();
+  if (query.length >= 3) { // Minimum 3 caractères pour lancer la recherche
+    console.log(`Navigation vers la recherche globale pour : "${query}"`);
+    // Redirige vers la page de résultats en passant la query
+    router.push({ name: 'search-results', query: { q: query } });
+    // On ne vide PAS la barre ici, pour que l'utilisateur voie ce qu'il a cherché
+    // searchQuery.value = '';
+  } else {
+    console.log("Terme de recherche trop court (minimum 3 caractères).");
+    // Optionnel : afficher un message d'erreur temporaire ?
+  }
+};
 </script>
 
 <template>
@@ -39,10 +51,11 @@ const handleLogout = () => {
           <div class="relative w-full">
             <input
               type="text"
-              v-model="authStore.searchQuery" placeholder="Filtrer mes jeux..." class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
+              v-model="searchQuery" placeholder="Rechercher un jeu Steam..." aria-label="Rechercher un jeu sur Steam"
+              @keyup.enter="performSearch" class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
                      placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-300"
             />
-            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>

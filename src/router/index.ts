@@ -7,6 +7,7 @@ import AuthCallback from '../components/AuthCallback.vue';
 import MyGamesView from '../views/MyGamesView.vue';
 import DashboardView from '../views/DashboardView.vue';
 import GameAchievementsView from '../views/GameAchievementsView.vue';
+import SearchResultsView from '../views/SearchResultsView.vue';
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -36,6 +37,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/dashboard",
     name: 'dashboard',
     component: DashboardView,
+  },
+  {
+    path: '/search',
+    name: 'search-results',
+    component: SearchResultsView,
   },
 
 ];
