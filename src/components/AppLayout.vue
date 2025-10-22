@@ -1,27 +1,21 @@
 <script setup lang="ts">
 import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
-import { RouterLink, useRouter } from 'vue-router'; // Ajoute useRouter
-import { ref } from 'vue';
+import { RouterLink, useRouter } from 'vue-router';
+// Pas besoin de 'ref' ici car searchQuery vient du store
 
-const authStore = useAuthStore();
-const searchQuery = ref(''); // Variable pour la barre de recherche (future utilisation)
-const router = useRouter(); // Outil pour rediriger
+const authStore = useAuthStore(); // Récupère le store (qui contient searchQuery)
+const router = useRouter();
 
 // Fonction pour gérer la déconnexion
 const handleLogout = () => {
-  console.log('Déconnexion déclenchée...'); // Log pour le débogage
-  authStore.logout(); // Appelle l'action du store (efface token + user + localStorage)
-  router.push({ name: 'home' }); // Redirige vers la page d'accueil
+  console.log('Déconnexion...');
+  authStore.logout();
+  router.push({ name: 'home' });
 };
 
-// Fonction pour gérer la recherche (future utilisation)
-const performSearch = () => {
-  if (searchQuery.value.trim()) {
-    console.log(`Recherche pour : "${searchQuery.value}"`);
-    // Pour l'instant, ne fait rien, mais on pourrait rediriger
-    // router.push({ name: 'search-results', query: { q: searchQuery.value } });
-  }
-};
+// Pas besoin de fonction performSearch ici,
+// car v-model met à jour le store en temps réel,
+// et MyGamesView utilise une computed property basée sur le store.
 </script>
 
 <template>
@@ -34,7 +28,7 @@ const performSearch = () => {
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-24">
 
         <RouterLink
-          :to="{ name: 'home' }"
+          :to="{ name: authStore.isLoggedIn ? 'dashboard' : 'home' }"
           class="text-4xl font-extrabold tracking-tighter text-white transition-all duration-300 ease-in-out
                  hover:text-purple-400 hover:drop-shadow-[0_0_15px_rgba(192,132,252,0.7)]"
         >
@@ -45,9 +39,7 @@ const performSearch = () => {
           <div class="relative w-full">
             <input
               type="text"
-              v-model="searchQuery"
-              placeholder="Rechercher un jeu..."
-              @keyup.enter="performSearch" class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
+              v-model="authStore.searchQuery" placeholder="Filtrer mes jeux..." class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
                      placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-300"
             />
             <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
