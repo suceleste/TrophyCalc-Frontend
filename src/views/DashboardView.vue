@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'; // onMounted n'est plus nécessaire ici
+import { ref, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { RouterLink } from 'vue-router';
 import axios from 'axios';
@@ -11,71 +11,80 @@ const globalCompletion = ref<number | null>(null);
 const isLoadingCompletion = ref(false);
 const completionError = ref<string | null>(null);
 
-// Fonction pour charger les stats (reste la même)
-const fetchGlobalCompletion = async () => {
-  if (!authStore.token) {
-    console.error("Dashboard: fetchGlobalCompletion appelé sans token.");
-    completionError.value = "Non connecté.";
-    isLoadingCompletion.value = false;
-    return;
-  }
+// NOUVEAU: États pour les derniers succès
+const latestAchievements = ref<any[]>([]); // Pour stocker les 5 derniers
+const isLoadingLatest = ref(false);
+const latestError = ref<string | null>(null);
 
+// Fonction pour charger la complétion globale
+const fetchGlobalCompletion = async () => {
+  if (!authStore.token) { completionError.value = "Non connecté."; return; }
   isLoadingCompletion.value = true;
   completionError.value = null;
-  const apiUrl = 'http://127.0.0.1:8000/api/user/stats/global-completion'; // URL dans une variable pour clarté
-
+  console.log("Dashboard: Début fetchGlobalCompletion...");
   try {
-    // =============================================
-    // LOG JUSTE AVANT L'APPEL AXIOS
-    console.log(`Dashboard: Tentative d'appel à ${apiUrl} avec token...`);
-    // =============================================
-
-    const response = await axios.get(apiUrl, {
-      headers: {
-        'Authorization': `Bearer ${authStore.token}`,
-        'Accept': 'application/json'
-      }
+    const response = await axios.get('http://127.0.0.1:8000/api/user/stats/global-completion', {
+      headers: { 'Authorization': `Bearer ${authStore.token}`, 'Accept': 'application/json' }
     });
-
     globalCompletion.value = response.data.completion_percentage;
     console.log("Dashboard: Complétion globale reçue:", globalCompletion.value);
-
   } catch (err: any) {
-    console.error(`Dashboard: ERREUR lors de l'appel à ${apiUrl}:`, err); // Log d'erreur amélioré
-    if (err.response) {
-       completionError.value = `Erreur (${err.response.status}).`;
-    } else {
-       completionError.value = "Erreur réseau.";
-    }
+    console.error("Dashboard: Erreur fetchGlobalCompletion:", err);
+    completionError.value = "Impossible de charger.";
     globalCompletion.value = null;
   } finally {
     isLoadingCompletion.value = false;
   }
 };
 
-// =============================================
-// OBSERVATEUR CORRIGÉ : Surveille authStore.user
-watch(
-  () => authStore.user, // La source à surveiller est l'objet user lui-même
-  (newUser, oldUser) => {
-    console.log(`Dashboard Watcher: User a changé. Ancien: ${!!oldUser}, Nouveau: ${!!newUser}`); // Log
+// NOUVEAU: Fonction pour charger les derniers succès
+const fetchLatestAchievements = async () => {
+  if (!authStore.token) { latestError.value = "Non connecté."; return; }
+  isLoadingLatest.value = true;
+  latestError.value = null;
+  console.log("Dashboard: Début fetchLatestAchievements...");
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/api/user/achievements/latest', {
+      headers: { 'Authorization': `Bearer ${authStore.token}`, 'Accept': 'application/json' }
+    });
+    latestAchievements.value = response.data || [];
+    console.log("Dashboard: Derniers succès reçus:", latestAchievements.value);
+  } catch (err: any) {
+    console.error("Dashboard: Erreur fetchLatestAchievements:", err);
+    latestError.value = "Impossible de charger.";
+    latestAchievements.value = [];
+  } finally {
+    isLoadingLatest.value = false;
+  }
+};
 
-    // Si un utilisateur VIENT d'être chargé (passe de null à non-null)
-    // ET qu'on n'a pas encore chargé les stats
-    if (newUser && !oldUser && globalCompletion.value === null && !isLoadingCompletion.value) {
-      console.log("Dashboard Watcher: Utilisateur chargé, lancement de fetchGlobalCompletion."); // Log
+// Observateur : Lance les deux fetchs quand l'utilisateur est chargé
+watch(
+  () => authStore.user,
+  (newUser, oldUser) => {
+    console.log(`Dashboard Watcher: User a changé. Ancien: ${!!oldUser}, Nouveau: ${!!newUser}`);
+    if (newUser && !oldUser) {
+      console.log("Dashboard Watcher: Utilisateur chargé, lancement des fetchs.");
+      // On lance les deux appels
       fetchGlobalCompletion();
+      fetchLatestAchievements(); // <-- Appel de la nouvelle fonction
     }
   },
-  { immediate: true } // immediate: true => Vérifie aussi au montage initial
+  { immediate: true }
 );
-// =============================================
+
+// Fonction pour formater la date (copiée ici aussi)
+const formatTimestamp = (timestamp: number | null) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+};
 
 </script>
 
 <template>
   <div>
-    <div v-if="authStore.isLoadingUser" class="text-center py-20">
+    <div v-if="authStore.isLoadingUser && !authStore.user" class="text-center py-20">
       <p class="text-slate-400 animate-pulse text-lg">Chargement de votre tableau de bord...</p>
     </div>
 
@@ -125,9 +134,21 @@ watch(
       <section>
          <h2 class="text-3xl font-bold text-white mb-6">Aperçu Rapide</h2>
          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
              <div class="bg-gray-800/50 p-6 rounded-xl border border-purple-500/30">
                  <h3 class="text-xl font-semibold text-white mb-4">Derniers Succès Débloqués</h3>
-                 <p class="text-slate-400">(Liste bientôt disponible ici...)</p>
+
+                 <div v-if="isLoadingLatest" class="text-slate-400 animate-pulse">Chargement...</div>
+                 <div v-else-if="latestError" class="text-red-400">{{ latestError }}</div>
+                 <ul v-else-if="latestAchievements.length > 0" class="space-y-3">
+                    <li v-for="ach in latestAchievements" :key="`${ach.app_id}-${ach.api_name}`" class="text-sm border-b border-gray-700/50 pb-2 last:border-b-0">
+                       <RouterLink :to="{ name: 'game-achievements', params: { app_id: ach.app_id } }" class="hover:text-purple-300 transition-colors block">
+                         <span class="font-medium text-white">{{ ach.name }}</span> <span class="text-slate-400 text-xs block">{{ ach.game_name }}</span>
+                       </RouterLink>
+                       <span class="text-xs text-slate-500 block mt-0.5">{{ formatTimestamp(ach.unlock_time) }}</span>
+                    </li>
+                 </ul>
+                 <p v-else class="text-slate-400">Aucun succès récent trouvé.</p>
              </div>
              <div class="bg-gray-800/50 p-6 rounded-xl border border-purple-500/30">
                  <h3 class="text-xl font-semibold text-white mb-4">Jeux Presque Terminés</h3>
@@ -141,6 +162,6 @@ watch(
     <div v-else class="text-center py-20">
        <h1 class="text-2xl text-red-500 font-semibold">Accès Refusé</h1>
        <p class="text-slate-400 mt-2">Impossible de charger les données ou vous n'êtes pas connecté.</p>
-       </div>
+    </div>
   </div>
 </template>
