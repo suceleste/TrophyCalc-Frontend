@@ -44,7 +44,7 @@ const performSearch = () => {
           class="text-4xl font-extrabold tracking-tighter text-white transition-all duration-300 ease-in-out
                  hover:text-purple-400 hover:drop-shadow-[0_0_15px_rgba(192,132,252,0.7)]"
         >
-          Trophy<span class="text-purple-400">Calc</span>
+          <img src="/favicon.png" alt="TrophyCalc Logo" class="h-10 w-auto">
         </RouterLink>
 
         <div class="hidden md:flex flex-grow max-w-xl mx-8">
