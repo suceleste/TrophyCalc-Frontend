@@ -146,13 +146,19 @@ watch(
         <p>{{ userError }}</p>
       </div>
       <ul v-else-if="userResults.length > 0" class="space-y-3">
-        <li v-for="user in userResults" :key="user.id" class="bg-gray-800/60 p-3 rounded-lg flex items-center space-x-4 border border-purple-500/20">
+        <RouterLink
+          v-for="user in userResults"
+          :key="user.id"
+          :to="{ name: 'user-profile', params: { steam_id_64: user.steam_id_64 } }"
+          class="bg-gray-800/60 p-3 rounded-lg flex items-center space-x-4 border border-purple-500/20
+                 transition-colors hover:bg-gray-700/50"
+        >
           <img :src="user.avatar" :alt="`Avatar de ${user.name}`" class="w-10 h-10 rounded-full flex-shrink-0 border border-gray-600"/>
           <div class="flex-grow min-w-0">
-             <span class="font-medium text-white block truncate hover:text-purple-300 transition-colors cursor-pointer" :title="user.name">{{ user.name }}</span>
+             <span class="font-medium text-white block truncate" :title="user.name">{{ user.name }}</span>
              <span class="text-xs text-slate-500 block">SteamID64: {{ user.steam_id_64 }}</span>
           </div>
-           </li>
+        </RouterLink>
       </ul>
       <div v-else-if="currentQuery.length >= 3" class="text-center py-6"><p class="text-slate-400">Aucun utilisateur trouvé pour "{{ currentQuery }}".</p></div>
     </section>

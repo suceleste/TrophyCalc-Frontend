@@ -8,6 +8,7 @@ import MyGamesView from '../views/MyGamesView.vue';
 import DashboardView from '../views/DashboardView.vue';
 import GameAchievementsView from '../views/GameAchievementsView.vue';
 import SearchResultsView from '../views/SearchResultsView.vue';
+import UserProfileView from '../views/UserProfileView.vue';
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -42,6 +43,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/search',
     name: 'search-results',
     component: SearchResultsView,
+  },
+  {
+    path: '/profile/:steam_id_64',
+    name: 'user-profile',
+    component: UserProfileView,
+    props: true
   },
 
 ];

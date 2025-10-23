@@ -40,7 +40,7 @@ const performSearch = () => {
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-24">
 
         <RouterLink
-          :to="{ name: authStore.isLoggedIn ? 'dashboard' : 'home' }"
+          :to="{ name: 'home' }"
           class="text-4xl font-extrabold tracking-tighter text-white transition-all duration-300 ease-in-out
                  hover:text-purple-400 hover:drop-shadow-[0_0_15px_rgba(192,132,252,0.7)]"
         >
