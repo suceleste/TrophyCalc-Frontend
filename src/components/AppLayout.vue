@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
 import { RouterLink, useRouter } from 'vue-router';
-import { ref } from 'vue'; // On a besoin de 'ref' pour la barre de recherche locale
+import { ref } from 'vue';
 
 const authStore = useAuthStore();
-const searchQuery = ref(''); // Variable LOCALE pour stocker la recherche de la barre
+const searchQuery = ref(''); // Variable LOCALE pour la recherche
 const router = useRouter();
+
+// --- NOUVEAU : État pour le modal de recherche ---
+const isSearchModalOpen = ref(false);
 
 // Fonction pour gérer la déconnexion
 const handleLogout = () => {
@@ -14,18 +17,18 @@ const handleLogout = () => {
   router.push({ name: 'home' });
 };
 
-// Fonction pour lancer la recherche globale et rediriger
+// Fonction pour lancer la recherche globale (utilisée par les DEUX barres)
 const performSearch = () => {
   const query = searchQuery.value.trim();
-  if (query.length >= 3) { // Minimum 3 caractères pour lancer la recherche
+  if (query.length >= 3) {
     console.log(`Navigation vers la recherche globale pour : "${query}"`);
-    // Redirige vers la page de résultats en passant la query
     router.push({ name: 'search-results', query: { q: query } });
-    // On ne vide PAS la barre ici, pour que l'utilisateur voie ce qu'il a cherché
-    // searchQuery.value = '';
+
+    // On ferme le modal et on vide la recherche
+    isSearchModalOpen.value = false;
+    searchQuery.value = '';
   } else {
     console.log("Terme de recherche trop court (minimum 3 caractères).");
-    // Optionnel : afficher un message d'erreur temporaire ?
   }
 };
 </script>
@@ -51,8 +54,11 @@ const performSearch = () => {
           <div class="relative w-full">
             <input
               type="text"
-              v-model="searchQuery" placeholder="Rechercher un jeu Steam..." aria-label="Rechercher un jeu sur Steam"
-              @keyup.enter="performSearch" class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
+              v-model="searchQuery"
+              placeholder="Rechercher un jeu Steam..."
+              aria-label="Rechercher un jeu sur Steam"
+              @keyup.enter="performSearch"
+              class="w-full bg-gray-800/50 border-2 border-gray-700 rounded-lg py-2 px-4 pl-10 text-white
                      placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition duration-300"
             />
             <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,7 +67,18 @@ const performSearch = () => {
           </div>
         </div>
 
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 sm:space-x-4">
+
+          <button
+            @click="isSearchModalOpen = true"
+            class="md:hidden p-2 rounded-full text-slate-300 hover:text-white hover:bg-gray-700/50 transition-colors"
+            aria-label="Ouvrir la recherche"
+          >
+            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
           <div v-if="authStore.isLoggedIn && authStore.user" class="relative group">
             <div class="flex items-center space-x-3 cursor-pointer">
               <span class="font-semibold text-white hidden lg:block">{{ authStore.user.name }}</span>
@@ -82,28 +99,14 @@ const performSearch = () => {
                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
                      transition-all duration-200 ease-in-out z-50"
             >
-              <RouterLink
-                :to="{ name: 'dashboard' }"
-                class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
-                active-class="bg-purple-600/30 text-purple-300"
-              >
+              <RouterLink :to="{ name: 'dashboard' }" class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150" active-class="bg-purple-600/30 text-purple-300">
                 Tableau de Bord
               </RouterLink>
-
-              <RouterLink
-                :to="{ name: 'my-games' }"
-                class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
-                active-class="bg-purple-600/30 text-purple-300"
-              >
+               <RouterLink :to="{ name: 'my-games' }" class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150" active-class="bg-purple-600/30 text-purple-300">
                 Mes Jeux
               </RouterLink>
-
               <div class="border-t border-gray-700 my-1"></div>
-
-              <button
-                @click="handleLogout"
-                class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600/20 hover:text-red-300 transition-colors duration-150"
-              >
+              <button @click="handleLogout" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600/20 hover:text-red-300 transition-colors duration-150">
                 Se déconnecter
               </button>
             </div>
@@ -124,6 +127,33 @@ const performSearch = () => {
 
     <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <slot /> </main>
+
+    <div v-if="isSearchModalOpen" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex justify-center p-4 pt-[15vh]">
+      <div class="w-full max-w-xl">
+        <div class="relative w-full">
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Rechercher un jeu Steam..."
+            @keyup.enter="performSearch"
+            class="w-full bg-gray-800 border-2 border-purple-500 rounded-lg py-3 px-5 pl-12 text-white text-lg
+                   placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 transition duration-300"
+          />
+          <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <button
+          @click="isSearchModalOpen = false"
+          class="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
+          aria-label="Fermer la recherche"
+        >
+          <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
 
   </div>
 </template>
