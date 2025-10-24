@@ -12,6 +12,7 @@ import GameAchievementsView from '../views/GameAchievementsView.vue';
 import SearchResultsView from '../views/SearchResultsView.vue';
 import UserProfileView from '../views/UserProfileView.vue';
 import NotFoundView from '../views/NotFoundView.vue';
+import LegalView from '@/views/LegalView.vue';
 
 /**
  * Définit toutes les routes de l'application.
@@ -59,7 +60,14 @@ const routes: Array<RouteRecordRaw> = [
     name: 'user-profile',
     component: UserProfileView,
     props: true, // Passe steam_id_64 comme prop
-    meta: { title: 'Profil Utilisateur' }
+    meta: {
+       title: 'Profil Utilisateur' }
+  },
+  {
+    path: '/legal',
+    name: 'legal',
+    component: LegalView,
+    meta: { title: 'Mentions Légales & Confidentialité' }
   },
   {
     path: '/:pathMatch(.*)*', // Route "catch-all" pour les 404
