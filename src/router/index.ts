@@ -9,6 +9,7 @@ import DashboardView from '../views/DashboardView.vue';
 import GameAchievementsView from '../views/GameAchievementsView.vue';
 import SearchResultsView from '../views/SearchResultsView.vue';
 import UserProfileView from '../views/UserProfileView.vue';
+import NotFoundView from '@/views/NotFoundView.vue';
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -50,6 +51,11 @@ const routes: Array<RouteRecordRaw> = [
     component: UserProfileView,
     props: true
   },
+  {
+    path: '/:pathMatch(.*)*', // Cette expression "magique" attrape tout ce qui n'a pas matché avant
+    name: 'NotFound',
+    component: NotFoundView
+  }
 
 ];
 
