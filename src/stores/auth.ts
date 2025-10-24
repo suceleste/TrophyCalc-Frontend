@@ -1,7 +1,7 @@
 import { ref, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 import axios from 'axios';
-import type { User } from '@/types/index'; // Importe le "contrat" User
+import type { User } from '@/types/index';
 
 // Récupère l'URL de base de l'API depuis les variables d'environnement (.env)
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
