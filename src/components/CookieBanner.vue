@@ -1,44 +1,89 @@
 <script setup lang="ts">
+/**
+ * Notre propre bandeau de cookies.
+ * Il vérifie son propre item localStorage.
+ * Il injecte le script Google Analytics MANUELLEMENT si l'utilisateur accepte.
+ */
 import { ref, onMounted } from 'vue';
 
-// On crée une variable pour savoir si le bandeau doit être montré
+// Notre propre clé de sauvegarde
+const CONSENT_STORAGE_KEY = 'trophycalc_consent_given';
+// L'ID de mesure (doit être dans ton .env)
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID;
+
 const showBanner = ref(false);
 
-// Au démarrage du composant...
+/**
+ * Vérifie si le consentement a été donné.
+ * Si oui, charge GA. Si non, affiche le bandeau.
+ */
 onMounted(() => {
-  // On vérifie si un choix a DÉJÀ été fait
-  if (!localStorage.getItem('cookie_consent_level')) {
-    // Si non, on affiche le bandeau
+  const consent = localStorage.getItem(CONSENT_STORAGE_KEY);
+
+  if (!consent) {
+    // Si l'utilisateur n'a jamais fait de choix, on affiche le bandeau
     showBanner.value = true;
-  } else {
-    // Si un choix a déjà été fait (ex: 'all'), on charge les scripts
-    if (localStorage.getItem('cookie_consent_level') === 'all') {
-      loadAnalyticsScripts();
-    }
+  } else if (consent === 'all') {
+    // Si l'utilisateur a déjà accepté, on charge GA
+    loadAnalyticsScripts();
   }
+  // Si le consentement était 'necessary', on ne fait rien
 });
 
-// Fonction appelée quand on accepte TOUT
+/**
+ * L'utilisateur a cliqué sur "Tout Accepter".
+ */
 const acceptAll = () => {
-  localStorage.setItem('cookie_consent_level', 'all');
+  localStorage.setItem(CONSENT_STORAGE_KEY, 'all');
   showBanner.value = false;
-  loadAnalyticsScripts(); // On charge les scripts d'analyse
-  console.log('Consentement "Tout accepter" donné.');
+  loadAnalyticsScripts(); // On lance GA
+  if (import.meta.env.DEV) console.log('[CookieBanner] Consentement "Tout accepter" donné.');
 };
 
-// Fonction appelée quand on accepte seulement le minimum
+/**
+ * L'utilisateur a cliqué sur "Refuser".
+ */
 const acceptNecessary = () => {
-  localStorage.setItem('cookie_consent_level', 'necessary');
+  localStorage.setItem(CONSENT_STORAGE_KEY, 'necessary');
   showBanner.value = false;
-  // On ne charge PAS les scripts d'analyse
-  console.log('Consentement "Nécessaires" donné.');
+  if (import.meta.env.DEV) console.log('[CookieBanner] Consentement "Nécessaires" donné.');
 };
 
-// Fonction qui chargera Google Analytics (quand on l'ajoutera)
+/**
+ * Fonction qui charge Google Analytics MANUELLEMENT
+ * en injectant les balises <script> que tu as fournies.
+ */
 const loadAnalyticsScripts = () => {
-  console.log('CHARGEMENT DE GOOGLE ANALYTICS... (logique à ajouter)');
-  // C'est ici qu'on ajoutera l'initialisation de 'vue-gtag-next'
-  // Mais pour l'instant, on se contente de le simuler.
+  if (!GA_MEASUREMENT_ID) {
+    console.error('VITE_GA_MEASUREMENT_ID n\'est pas défini dans le fichier .env');
+    return;
+  }
+  // Vérifie si le script est déjà injecté (pour éviter les doublons)
+  if (document.getElementById('gtag-script')) {
+    if (import.meta.env.DEV) console.log('[CookieBanner] Google Analytics déjà chargé.');
+    return;
+  }
+
+  if (import.meta.env.DEV) console.log('[CookieBanner] Chargement manuel de Google Analytics...');
+
+  // 1. Crée la balise script principale
+  const script1 = document.createElement('script');
+  script1.id = 'gtag-script'; // On lui donne un ID pour le retrouver
+  script1.async = true;
+  script1.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+  document.head.appendChild(script1);
+
+  // 2. Crée la balise script d'initialisation
+  const script2 = document.createElement('script');
+  script2.innerHTML = `
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '${GA_MEASUREMENT_ID}');
+  `;
+  document.head.appendChild(script2);
+
+  if (import.meta.env.DEV) console.log('[CookieBanner] Google Analytics chargé manuellement.');
 };
 </script>
 
@@ -50,11 +95,12 @@ const loadAnalyticsScripts = () => {
 
       <p class="text-sm text-slate-300 flex-grow">
         Nous utilisons des cookies essentiels pour votre session et, si vous l'acceptez,
-        des cookies d'analyse (comme Google Analytics) pour améliorer le site.
+        des cookies d'analyse (Google Analytics) pour améliorer le site.
       </p>
 
       <div class="flex-shrink-0 flex gap-4">
         <button
+          type="button"
           @click="acceptNecessary"
           class="bg-gray-700 text-slate-300 font-bold py-2 px-5 rounded-lg
                  hover:bg-gray-600 transition-colors"
@@ -62,6 +108,7 @@ const loadAnalyticsScripts = () => {
           Refuser (Nécessaires)
         </button>
         <button
+          type="button"
           @click="acceptAll"
           class="bg-purple-600 text-white font-bold py-2 px-5 rounded-lg
                  hover:bg-purple-700 transition-colors"
