@@ -1,23 +1,25 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
+import { useAuthStore } from '@/stores/auth'; // Utilise l'alias @/
 import { RouterLink } from 'vue-router';
 import axios from 'axios';
+import type { User, LatestAchievement, NearlyCompletedGame } from '@/types/index'; // Importe les types
+
+// URL de base de l'API depuis les variables d'environnement
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const authStore = useAuthStore();
 
-// États pour la complétion globale
+// --- États pour les 3 sections ---
 const globalCompletion = ref<number | null>(null);
 const isLoadingCompletion = ref(false);
 const completionError = ref<string | null>(null);
 
-// États pour les derniers succès
-const latestAchievements = ref<any[]>([]);
+const latestAchievements = ref<LatestAchievement[]>([]); // Utilise le type
 const isLoadingLatest = ref(false);
 const latestError = ref<string | null>(null);
 
-// États pour les jeux presque terminés
-const nearlyCompletedGames = ref<any[]>([]);
+const nearlyCompletedGames = ref<NearlyCompletedGame[]>([]); // Utilise le type
 const isLoadingNearlyCompleted = ref(false);
 const nearlyCompletedError = ref<string | null>(null);
 
@@ -26,13 +28,15 @@ const fetchGlobalCompletion = async () => {
   if (!authStore.token) { completionError.value = "Non connecté."; isLoadingCompletion.value = false; return; }
   isLoadingCompletion.value = true;
   completionError.value = null;
-  console.log("Dashboard: Début fetchGlobalCompletion...");
+
+  if (import.meta.env.DEV) console.log("Dashboard: Début fetchGlobalCompletion...");
+
   try {
-    const response = await axios.get('http://127.0.0.1:8000/api/user/stats/global-completion', {
+    const response = await axios.get(`${API_BASE_URL}/user/stats/global-completion`, {
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Accept': 'application/json' }
     });
     globalCompletion.value = response.data.completion_percentage;
-    console.log("Dashboard: Complétion globale reçue:", globalCompletion.value);
+    if (import.meta.env.DEV) console.log("Dashboard: Complétion globale reçue:", globalCompletion.value);
   } catch (err: any) {
     console.error("Dashboard: Erreur fetchGlobalCompletion:", err);
     completionError.value = "Impossible de charger.";
@@ -47,13 +51,15 @@ const fetchLatestAchievements = async () => {
   if (!authStore.token) { latestError.value = "Non connecté."; isLoadingLatest.value = false; return; }
   isLoadingLatest.value = true;
   latestError.value = null;
-  console.log("Dashboard: Début fetchLatestAchievements...");
+
+  if (import.meta.env.DEV) console.log("Dashboard: Début fetchLatestAchievements...");
+
   try {
-    const response = await axios.get('http://127.0.0.1:8000/api/user/achievements/latest', {
+    const response = await axios.get<LatestAchievement[]>(`${API_BASE_URL}/user/achievements/latest`, {
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Accept': 'application/json' }
     });
     latestAchievements.value = response.data || [];
-    console.log("Dashboard: Derniers succès reçus:", latestAchievements.value);
+    if (import.meta.env.DEV) console.log("Dashboard: Derniers succès reçus:", latestAchievements.value);
   } catch (err: any) {
     console.error("Dashboard: Erreur fetchLatestAchievements:", err);
     latestError.value = "Impossible de charger.";
@@ -68,13 +74,15 @@ const fetchNearlyCompletedGames = async () => {
   if (!authStore.token) { nearlyCompletedError.value = "Non connecté."; isLoadingNearlyCompleted.value = false; return; }
   isLoadingNearlyCompleted.value = true;
   nearlyCompletedError.value = null;
-  console.log("Dashboard: Début fetchNearlyCompletedGames...");
+
+  if (import.meta.env.DEV) console.log("Dashboard: Début fetchNearlyCompletedGames...");
+
   try {
-    const response = await axios.get('http://127.0.0.1:8000/api/user/games/nearly-completed', {
+    const response = await axios.get<NearlyCompletedGame[]>(`${API_BASE_URL}/user/games/nearly-completed`, {
       headers: { 'Authorization': `Bearer ${authStore.token}`, 'Accept': 'application/json' }
     });
     nearlyCompletedGames.value = response.data || [];
-    console.log("Dashboard: Jeux presque terminés reçus:", nearlyCompletedGames.value);
+    if (import.meta.env.DEV) console.log("Dashboard: Jeux presque terminés reçus:", nearlyCompletedGames.value);
   } catch (err: any) {
     console.error("Dashboard: Erreur fetchNearlyCompletedGames:", err);
     nearlyCompletedError.value = "Impossible de charger.";
@@ -84,19 +92,25 @@ const fetchNearlyCompletedGames = async () => {
   }
 };
 
-// --- Observateur : Lance les TROIS fetchs ---
+// --- Observateur : Lance les TROIS fetchs quand l'utilisateur est chargé ---
 watch(
-  () => authStore.user,
+  () => authStore.user, // Surveille l'objet utilisateur
   (newUser, oldUser) => {
+    if (import.meta.env.DEV) {
+      console.log(`Dashboard Watcher: User a changé. Ancien: ${!!oldUser}, Nouveau: ${!!newUser}`);
+    }
     // Si l'utilisateur vient d'être chargé (passe de null à objet)
     if (newUser && !oldUser) {
-      console.log("Dashboard Watcher: Utilisateur chargé, lancement des fetchs.");
+      if (import.meta.env.DEV) {
+        console.log("Dashboard Watcher: Utilisateur chargé, lancement des 3 fetchs.");
+      }
+      // On lance les trois appels en parallèle
       fetchGlobalCompletion();
       fetchLatestAchievements();
       fetchNearlyCompletedGames();
     }
   },
-  { immediate: true } // Vérifie aussi au montage initial
+  { immediate: true } // Vérifie une fois au montage
 );
 
 // --- Fonction utilitaire pour formater la date ---
@@ -110,22 +124,23 @@ const formatTimestamp = (timestamp: number | null) => {
 
 <template>
   <div>
-    <div v-if="!authStore.user && authStore.token" class="text-center py-20"> <p class="text-slate-400 animate-pulse text-lg">Chargement de votre tableau de bord...</p>
+    <div v-if="!authStore.user && authStore.token" class="text-center py-20">
+      <p class="text-slate-400 animate-pulse text-lg">Chargement de votre tableau de bord...</p>
     </div>
 
     <div v-else-if="authStore.isLoggedIn && authStore.user" class="space-y-10">
 
       <div class="mb-8">
-         <h1 class="text-4xl font-bold text-white">Bonjour, {{ authStore.user.name }} !</h1>
+         <h1 class="text-4xl font-bold text-white">Bonjour, {{ (authStore.user as User).name }} !</h1>
          <p class="text-slate-400">Prêt à analyser vos trophées ?</p>
       </div>
 
       <section class="flex flex-col md:flex-row items-center md:space-x-8 space-y-6 md:space-y-0">
         <div class="flex items-center space-x-4 bg-gray-800/50 p-6 rounded-xl border border-purple-500/30 w-full md:w-auto">
-          <img :src="authStore.user.avatar" alt="Avatar" class="w-16 h-16 rounded-lg border-2 border-gray-700"/>
+          <img :src="(authStore.user as User).avatar" alt="Avatar" class="w-16 h-16 rounded-lg border-2 border-gray-700"/>
           <div>
-            <h1 class="text-2xl font-bold text-white">{{ authStore.user.name }}</h1>
-            <a :href="authStore.user.profile_url" target="_blank" class="text-sm text-purple-400 hover:underline">Voir profil Steam</a>
+            <h1 class="text-2xl font-bold text-white">{{ (authStore.user as User).name }}</h1>
+            <a :href="(authStore.user as User).profile_url" target="_blank" class="text-sm text-purple-400 hover:underline">Voir profil Steam</a>
           </div>
         </div>
         <div class="bg-gray-800/50 p-6 rounded-xl border border-purple-500/30 text-center flex-grow">
@@ -215,3 +230,7 @@ const formatTimestamp = (timestamp: number | null) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Styles spécifiques si besoin */
+</style>

@@ -19,6 +19,11 @@
     
     // ... autres options
   },
+
+  "baseUrl": ".", // Indique que les chemins de base partent d'ici
+  "paths": {
+    "@/*": ["./src/*"] // Définit que "@/*" signifie "./src/*"
+  },
   
   // NOTE IMPORTANTE : Assurez-vous que l'inclusion de fichiers se fait correctement
   "include": [
