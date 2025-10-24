@@ -1,40 +1,57 @@
 <script setup lang="ts">
-import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
+/**
+ * Layout principal de l'application.
+ * Gère l'affichage de la barre de navigation, le menu utilisateur,
+ * la recherche globale (desktop + mobile modal) et le pied de page.
+ */
+import { useAuthStore } from '@/stores/auth'; // Utilise l'alias @/
 import { RouterLink, useRouter } from 'vue-router';
 import { ref } from 'vue';
 
+// Récupère le store Pinia pour l'état d'authentification
 const authStore = useAuthStore();
-const searchQuery = ref(''); // Variable LOCALE pour la recherche
+// Variable locale pour le champ de recherche (utilisée par les deux barres)
+const searchQuery = ref('');
+// Outil pour la redirection (utilisé par la déconnexion et la recherche)
 const router = useRouter();
 
-// --- NOUVEAU : État pour le modal de recherche ---
+// État pour contrôler l'ouverture du modal de recherche sur mobile
 const isSearchModalOpen = ref(false);
 
-// Fonction pour gérer la déconnexion
+/**
+ * Gère la déconnexion de l'utilisateur.
+ * Appelle l'action logout du store et redirige vers l'accueil.
+ */
 const handleLogout = () => {
-  console.log('Déconnexion...');
+  if (import.meta.env.DEV) console.log('[AppLayout] Déconnexion...');
   authStore.logout();
   router.push({ name: 'home' });
 };
 
-// Fonction pour lancer la recherche globale (utilisée par les DEUX barres)
+/**
+ * Gère la soumission de la recherche (desktop et mobile).
+ * Redirige vers la page des résultats de recherche si la requête est valide.
+ */
 const performSearch = () => {
   const query = searchQuery.value.trim();
   if (query.length >= 3) {
-    console.log(`Navigation vers la recherche globale pour : "${query}"`);
+    if (import.meta.env.DEV) console.log(`[AppLayout] Navigation vers la recherche globale pour : "${query}"`);
+
+    // Redirige vers la page de résultats en passant la query comme paramètre d'URL
     router.push({ name: 'search-results', query: { q: query } });
 
-    // On ferme le modal et on vide la recherche
+    // Nettoie et ferme le modal (si ouvert)
     isSearchModalOpen.value = false;
-    searchQuery.value = '';
+    searchQuery.value = ''; // Vide la barre après la recherche
   } else {
-    console.log("Terme de recherche trop court (minimum 3 caractères).");
+    if (import.meta.env.DEV) console.log("[AppLayout] Terme de recherche trop court (minimum 3 caractères).");
+    // Optionnel : on pourrait afficher un message d'erreur dans le modal
   }
 };
 </script>
 
 <template>
-  <div class="bg-black text-slate-300 min-h-screen font-sans">
+  <div class="bg-black text-slate-300 min-h-screen font-sans flex flex-col">
 
     <header
       class="bg-black/60 backdrop-blur-xl sticky top-0 z-50
@@ -43,7 +60,7 @@ const performSearch = () => {
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-24">
 
         <RouterLink
-          :to="{ name: 'home' }"
+          :to="{ name: authStore.isLoggedIn ? 'dashboard' : 'home' }"
           class="text-4xl font-extrabold tracking-tighter text-white transition-all duration-300 ease-in-out
                  hover:text-purple-400 hover:drop-shadow-[0_0_15px_rgba(192,132,252,0.7)]"
         >
@@ -99,14 +116,25 @@ const performSearch = () => {
                      opacity-0 invisible group-hover:opacity-100 group-hover:visible
                      transition-all duration-200 ease-in-out z-50"
             >
-              <RouterLink :to="{ name: 'dashboard' }" class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150" active-class="bg-purple-600/30 text-purple-300">
+              <RouterLink
+                :to="{ name: 'dashboard' }"
+                class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                active-class="bg-purple-600/30 text-purple-300"
+              >
                 Tableau de Bord
               </RouterLink>
-               <RouterLink :to="{ name: 'my-games' }" class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150" active-class="bg-purple-600/30 text-purple-300">
+               <RouterLink
+                :to="{ name: 'my-games' }"
+                class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                active-class="bg-purple-600/30 text-purple-300"
+              >
                 Mes Jeux
               </RouterLink>
               <div class="border-t border-gray-700 my-1"></div>
-              <button @click="handleLogout" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600/20 hover:text-red-300 transition-colors duration-150">
+              <button
+                @click="handleLogout"
+                class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600/20 hover:text-red-300 transition-colors duration-150"
+              >
                 Se déconnecter
               </button>
             </div>
@@ -125,8 +153,22 @@ const performSearch = () => {
       </nav>
     </header>
 
-    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-10 flex-grow">
       <slot /> </main>
+
+    <footer class="bg-gray-900/50 border-t border-purple-500/20 mt-16 py-8">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-slate-500">
+        <p>&copy; {{ new Date().getFullYear() }} TrophyCalc. Tous droits réservés.</p>
+        <p class="mt-2">
+          Ce site n'est pas affilié à Valve Corporation. Steam et le logo Steam sont des marques déposées de Valve Corporation.
+        </p>
+        <nav class="mt-4 space-x-4">
+          <RouterLink :to="{ name: 'legal' }" class="hover:text-purple-400 transition-colors">
+            Mentions Légales & Confidentialité
+          </RouterLink>
+        </nav>
+      </div>
+    </footer>
 
     <div v-if="isSearchModalOpen" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex justify-center p-4 pt-[15vh]">
       <div class="w-full max-w-xl">
@@ -135,6 +177,7 @@ const performSearch = () => {
             type="text"
             v-model="searchQuery"
             placeholder="Rechercher un jeu Steam..."
+            aria-label="Rechercher un jeu sur Steam"
             @keyup.enter="performSearch"
             class="w-full bg-gray-800 border-2 border-purple-500 rounded-lg py-3 px-5 pl-12 text-white text-lg
                    placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 transition duration-300"
@@ -157,3 +200,14 @@ const performSearch = () => {
 
   </div>
 </template>
+
+<style scoped>
+/* Force le layout à prendre toute la hauteur pour pousser le footer */
+.min-h-screen {
+  display: flex;
+  flex-direction: column;
+}
+main {
+  flex-grow: 1;
+}
+</style>
