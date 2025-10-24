@@ -1,14 +1,24 @@
-import './assets/main.css'
+/**
+ * Fichier d'entrée principal de l'application Vue.js.
+ * Initialise l'application, le routeur, le store Pinia,
+ * et le plugin de consentement aux cookies.
+ */
+import './assets/main.css';
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia' // <-- 1. ON IMPORTE LA FONCTION POUR CRÉER PINIA
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
 
-import App from './App.vue'
-import router from './router'
+import App from './App.vue';
+import router from './router';
 
-const app = createApp(App)
+// Crée l'instance de l'application Vue
+const app = createApp(App);
 
-app.use(createPinia()) // <-- 2. ON BRANCHE LE TABLEAU DE BORD À L'APPLICATION
-app.use(router)
+// Enregistre le store global Pinia
+app.use(createPinia());
 
-app.mount('#app')
+// Enregistre le routeur
+app.use(router);
+
+// Monte l'application sur l'élément #app dans index.html
+app.mount('#app');
