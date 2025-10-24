@@ -1,15 +1,23 @@
 <script setup lang="ts">
+/**
+ * Vue pour afficher les succès d'un jeu spécifique.
+ * Récupère les données depuis l'API, gère le filtrage, le tri et la recherche.
+ */
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
-import { useAuthStore } from '../stores/auth'; // Utilise l'alias @/
+import { useAuthStore } from '@/stores/auth'; // Utilise l'alias @/
+import type { Achievement } from '@/types/index'; // Importe le type "contrat"
 
-// Outils
+// Récupère l'URL de base de l'API depuis les variables d'environnement
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// --- Outils ---
 const route = useRoute();
 const authStore = useAuthStore();
 
-// Variables d'état pour les données
-const allAchievements = ref<any[]>([]); // Stocke tous les succès bruts
+// --- STATE (Variables d'état) ---
+const allAchievements = ref<Achievement[]>([]); // Stocke tous les succès bruts (typé)
 const gameName = ref<string | null>(null);
 const totalCount = ref(0);
 const unlockedCount = ref(0);
@@ -17,23 +25,37 @@ const isLoading = ref(true);
 const error = ref<string | null>(null);
 
 // Variables d'état pour les contrôles
-const currentFilter = ref<'all' | 'unlocked' | 'locked'>('all'); // Filtre par statut
-const currentSort = ref<'default' | 'name_asc' | 'name_desc' | 'date_asc' | 'date_desc' | 'rarity_asc' | 'rarity_desc'>('default'); // Critère de tri
-const searchQuery = ref(''); // Terme de recherche
+const currentFilter = ref<'all' | 'unlocked' | 'locked'>('all');
+const currentSort = ref<'default' | 'name_asc' | 'name_desc' | 'date_asc' | 'date_desc' | 'rarity_asc' | 'rarity_desc'>('default');
+const searchQuery = ref('');
 
-// Récupérer l'app_id depuis l'URL
-const appId = route.params.app_id as string;
+// Récupérer l'app_id depuis l'URL de manière sécurisée
+const appId = computed(() => {
+  const id = route.params.app_id;
+  return Array.isArray(id) ? id[0] : id;
+});
 
-// Fonction pour formater le timestamp Unix en date lisible
-const formatTimestamp = (timestamp: number | null) => {
-  if (!timestamp) return 'Non débloqué';
-  const date = new Date(timestamp * 1000);
+// --- Fonctions Utilitaires ---
+
+/**
+ * Formate un timestamp Unix en date française lisible.
+ * @param {number | null} timestamp - Le timestamp Unix (en secondes).
+ * @returns {string} - La date formatée ou 'Non débloqué'.
+ */
+const formatTimestamp = (timestamp: number | null): string => {
+  if (!timestamp || timestamp === 0) return 'Non débloqué';
+  const date = new Date(timestamp * 1000); // JS attend des millisecondes
   return date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-// Propriété calculée pour afficher la liste filtrée, recherchée ET triée
-const displayedAchievements = computed(() => {
-  let list = allAchievements.value;
+// --- COMPUTED (Propriétés calculées) ---
+
+/**
+ * Calcule la liste des succès à afficher en fonction des filtres,
+ * de la recherche et du tri sélectionnés.
+ */
+const displayedAchievements = computed((): Achievement[] => {
+  let list: Achievement[] = [...allAchievements.value]; // Commence avec une copie
 
   // 1. Filtrer par statut (Tous/Débloqués/Verrouillés)
   if (currentFilter.value === 'unlocked') {
@@ -52,7 +74,8 @@ const displayedAchievements = computed(() => {
   }
 
   // 3. Trier la liste résultante
-  const sortedList = [...list]; // Crée une copie
+  // On crée une nouvelle copie pour le tri pour ne pas muter la liste filtrée
+  const sortedList = [...list];
   switch (currentSort.value) {
     case 'name_asc': // A-Z
       sortedList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -62,7 +85,7 @@ const displayedAchievements = computed(() => {
       break;
     case 'date_desc': // Plus récent
       sortedList.sort((a, b) => {
-          const timeA = a.achieved ? a.unlock_time : -1; // -1 pour non débloqués (fin)
+          const timeA = a.achieved ? a.unlock_time : -1;
           const timeB = b.achieved ? b.unlock_time : -1;
           if (timeA === -1 && timeB === -1) return (a.name || '').localeCompare(b.name || '');
           return timeB - timeA;
@@ -70,7 +93,7 @@ const displayedAchievements = computed(() => {
       break;
     case 'date_asc': // Plus ancien
       sortedList.sort((a, b) => {
-          const timeA = a.achieved ? a.unlock_time : Infinity; // Infinity pour non débloqués (fin)
+          const timeA = a.achieved ? a.unlock_time : Infinity;
           const timeB = b.achieved ? b.unlock_time : Infinity;
           if (timeA === Infinity && timeB === Infinity) return (a.name || '').localeCompare(b.name || '');
           return timeA - timeB;
@@ -92,20 +115,26 @@ const displayedAchievements = computed(() => {
            return percentB - percentA;
        });
        break;
-    // default: // Garde l'ordre après filtre (basé sur API: débloqués d'abord)
+    // case 'default':
+    //   L'API renvoie déjà trié par débloqué en premier,
+    //   donc on n'applique pas de tri supplémentaire.
   }
   return sortedList;
 });
 
+// --- LIFECYCLE (Au montage du composant) ---
 
-// Appeler l'API dès que la page est prête
+/**
+ * Au montage, vérifie l'authentification et l'AppID, puis
+ * lance la récupération des succès du jeu.
+ */
 onMounted(async () => {
   if (!authStore.token) {
     error.value = "Erreur: Authentification requise.";
     isLoading.value = false;
     return;
   }
-  if (!appId) {
+  if (!appId.value) { // Utilise .value car appId est un computed
     error.value = "Erreur: ID de l'application manquant dans l'URL.";
     isLoading.value = false;
     return;
@@ -114,9 +143,13 @@ onMounted(async () => {
   try {
     isLoading.value = true;
     error.value = null;
+    const apiUrl = `${API_BASE_URL}/user/games/${appId.value}/achievements`;
 
-    // Récupère les succès avec les détails (y compris 'percent')
-    const response = await axios.get(`http://127.0.0.1:8000/api/user/games/${appId}/achievements`, {
+    if (import.meta.env.DEV) {
+      console.log(`[GameAchievementsView] Appel API: ${apiUrl}`);
+    }
+
+    const response = await axios.get(apiUrl, {
       headers: {
         'Authorization': `Bearer ${authStore.token}`,
         'Accept': 'application/json'
@@ -124,15 +157,35 @@ onMounted(async () => {
     });
 
     // Mise à jour de l'état avec les données reçues
-    allAchievements.value = response.data.achievements || [];
-    gameName.value = response.data.game_name || `Jeu ${appId}`;
-    totalCount.value = response.data.total_count || 0;
-    unlockedCount.value = response.data.unlocked_count || 0;
-    console.log('Succès bruts reçus:', allAchievements.value);
+    // On type la réponse pour plus de sécurité
+    const data = response.data as {
+        status: string;
+        game_name: string;
+        achievements: Achievement[];
+        total_count: number;
+        unlocked_count: number;
+        message?: string; // Pour les erreurs 'info'
+    };
 
-  } catch (err: any) {
-    console.error(`Erreur lors de la récupération des succès pour ${appId}:`, err);
-    if (err.response) {
+    if (data.status === 'success') {
+        allAchievements.value = data.achievements || [];
+        gameName.value = data.game_name || `Jeu ${appId.value}`;
+        totalCount.value = data.total_count || 0;
+        unlockedCount.value = data.unlocked_count || 0;
+    } else if (data.status === 'info') {
+        // Gère les cas où l'API renvoie une info (ex: pas de succès)
+        error.value = data.message || 'Succès non disponibles pour ce jeu.';
+        allAchievements.value = [];
+    }
+
+    if (import.meta.env.DEV) {
+      console.log(`[GameAchievementsView] ${allAchievements.value.length} succès bruts reçus.`);
+    }
+
+  } catch (err: unknown) {
+    console.error(`[GameAchievementsView] Erreur lors de la récupération des succès pour ${appId.value}:`, err);
+    if (axios.isAxiosError(err) && err.response) {
+      // Si l'API renvoie une erreur 'info' (comme profil privé)
       if (err.response.data.status === 'info') {
          error.value = err.response.data.message;
       } else {
@@ -151,7 +204,8 @@ onMounted(async () => {
 <template>
   <div class="space-y-6">
     <h1 v-if="gameName" class="text-4xl font-bold text-white">{{ gameName }} - Succès</h1>
-    <h1 v-else class="text-4xl font-bold text-white animate-pulse">Chargement...</h1>
+    <h1 v-else-if="isLoading" class="text-4xl font-bold text-white animate-pulse">Chargement...</h1>
+    <h1 v-else class="text-4xl font-bold text-red-500">Erreur</h1>
 
     <div v-if="!isLoading && !error && totalCount > 0">
       <div class="flex justify-between items-center mb-1 text-sm text-slate-400">
@@ -275,6 +329,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Style pour la flèche du <select> */
 select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
