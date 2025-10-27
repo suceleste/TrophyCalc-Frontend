@@ -7,5 +7,14 @@
     {
       "path": "./tsconfig.app.json"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "baseUrl": ".", 
+    "paths": {
+      "@/*": ["./src/*"] 
+    },
+    "moduleResolution": "node", // Dit à TS de chercher les modules comme Node
+    "esModuleInterop": true,   // Important pour les imports
+    "resolveJsonModule": true, // Pour les fichiers .json
+  }
 }
