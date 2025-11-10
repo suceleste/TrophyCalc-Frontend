@@ -13,6 +13,7 @@ import SearchResultsView from '../views/SearchResultsView.vue';
 import UserProfileView from '../views/UserProfileView.vue';
 import NotFoundView from '../views/NotFoundView.vue';
 import LegalView from '@/views/LegalView.vue';
+import LeaderboardView from '@/views/LeaderboardView.vue';
 
 /**
  * Définit toutes les routes de l'application.
@@ -74,6 +75,12 @@ const routes: Array<RouteRecordRaw> = [
     name: 'NotFound',
     component: NotFoundView,
     meta: { title: '404 - Page Non Trouvée' }
+  },
+  {
+    path: '/leaderboard',
+    name: 'leaderboard',
+    component: LeaderboardView,
+    meta: { title: 'Leaderboard'}
   }
 ];
 
