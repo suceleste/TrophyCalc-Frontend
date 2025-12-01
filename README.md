@@ -1,4 +1,4 @@
-```markdown
+
 # 🏆 TrophyCalc Client (Frontend)
 
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
