@@ -1,48 +1,32 @@
-# TrophyCalc-Frontend
+```markdown
+# 🏆 TrophyCalc Client (Frontend)
 
-This template should help get you started developing with Vue 3 in Vite.
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-4.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-3.x-06B6D4?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
 
-## Recommended IDE Setup
+> **Single Page Application (SPA)** offrant une interface fluide et réactive pour le tracking de succès Steam.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+---
 
-## Recommended Browser Setup
+## 🎨 Vue d'ensemble
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Cette application est le client visuel de l'écosystème TrophyCalc. Elle communique avec l'API Laravel pour afficher les données en temps réel sans rechargement de page.
 
-## Type Support for `.vue` Imports in TS
+### ✨ Fonctionnalités Clés
+* **Design Réactif :** Interface utilisateur moderne construite avec Vue 3 (Composition API).
+* **State Management :** Utilisation de **Pinia** pour une gestion d'état global performante (User session, Game library).
+* **Data Visualization :** Graphiques dynamiques pour l'affichage de la progression et des statistiques de rareté.
+* **Optimisation :** Lazy loading des composants et gestion optimisée des assets via Vite.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+---
 
-## Customize configuration
+## 🛠️ Stack Technique
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+* **Core :** Vue.js 3 (Composition API, Script Setup)
+* **Build Tool :** Vite
+* **HTTP Client :** Axios (avec intercepteurs pour la gestion des tokens)
+* **Store :** Pinia
+* **UI :** TailwindCSS / Headless UI
 
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+---
