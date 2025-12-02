@@ -81,14 +81,15 @@ onMounted(() => {
                           text-xl sm:text-2xl font-bold border-2 border-purple-500">
                 {{ index + 1 }}
               </div>
-
-              <div class="flex items-center space-x-4 min-w-0">
-                <img :src="user.avatar" alt="Avatar" class="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-slate-700 flex-shrink-0">
-                <div class="min-w-0">
-                  <p class="text-lg sm:text-xl font-bold text-white truncate" :title="user.name">{{ user.name }}</p>
-                  <p class="text-sm text-slate-400">{{ user.games_completed }} jeux complétés</p>
+              <a :href="'/profile/' + user.steam_id_64">
+                <div class="flex items-center space-x-4 min-w-0">
+                  <img :src="user.avatar" alt="Avatar" class="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-slate-700 flex-shrink-0">
+                  <div class="min-w-0">
+                    <p class="text-lg sm:text-xl font-bold text-white truncate" :title="user.name">{{ user.name }}</p>
+                    <p class="text-sm text-slate-400">{{ user.games_completed }} jeux complétés</p>
+                  </div>
                 </div>
-              </div>
+              </a>
             </div>
 
             <div class="flex-shrink-0 text-right">
