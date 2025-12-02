@@ -1,9 +1,6 @@
 // src/types/index.ts
 
-/**
- * Définit la structure de l'objet Utilisateur
- * tel qu'il est stocké dans notre BDD et renvoyé par l'API /api/user
- */
+
 export interface User {
   id: number;
   name: string;
@@ -88,16 +85,14 @@ export interface UserSearchResult {
   steam_id_64: string;
 }
 
-/**
- * Définit le profil utilisateur public.
- * (Utilisé dans UserProfileView.vue)
- */
 export interface PublicUserProfile {
   id: number;
   name: string;
   avatar: string;
+  profile_url: string;
+  total_xp: number;
   steam_id_64: string;
-  created_at: string; // La date d'inscription sur TrophyCalc
+  created_at: string;
 }
 
 export interface LeaderboardUser {

@@ -120,16 +120,17 @@ onMounted(async () => {
       <p class="text-slate-400 mt-1">
         Membre TrophyCalc depuis le {{ formatDate(userProfile.created_at) }}
       </p>
+      <a :href="userProfile.profile_url" target="_blank" class="text-sm text-purple-400 hover:underline">Voir profil Steam</a>
       <div class="mt-8 border-t border-gray-700 pt-6 w-full max-w-lg">
-        <h2 class="text-2xl font-semibold text-white mb-4">Statistiques Utilisateur (Bientôt)</h2>
+        <h2 class="text-2xl font-semibold text-white mb-4">Statistiques Utilisateur</h2>
         <div class="grid grid-cols-2 gap-4">
           <div class="bg-gray-700/50 p-4 rounded-lg">
-            <div class="text-sm text-slate-400 uppercase">Complétion Globale</div>
-            <div class="text-3xl font-bold text-white animate-pulse">-- %</div>
+            <div class="text-sm text-slate-400 uppercase">Jeux Complétés</div>
+            <div class="text-3xl font-bold text-white animate-pulse">{{ userProfile.games_completed }}</div>
           </div>
           <div class="bg-gray-700/50 p-4 rounded-lg">
-            <div class="text-sm text-slate-400 uppercase">Succès Débloqués</div>
-            <div class="text-3xl font-bold text-white animate-pulse">--</div>
+            <div class="text-sm text-slate-400 uppercase">Total XP</div>
+            <div class="text-3xl font-bold text-white animate-pulse">{{ userProfile.total_xp}}</div>
           </div>
         </div>
       </div>
