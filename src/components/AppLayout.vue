@@ -128,12 +128,19 @@ const performSearch = () => {
               >
                 Tableau de Bord
               </RouterLink>
-               <RouterLink
+              <RouterLink
                 :to="{ name: 'my-games' }"
                 class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
                 active-class="bg-purple-600/30 text-purple-300"
               >
                 Mes Jeux
+              </RouterLink>
+              <RouterLink
+                :to="{ name: 'leaderboard' }"
+                class="block w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                active-class="bg-purple-600/30 text-purple-300"
+              >
+                Leaderboard
               </RouterLink>
               <div class="border-t border-gray-700 my-1"></div>
               <button
