@@ -179,7 +179,7 @@ const formatTimestamp = (timestamp: number | null) => {
         </div>
       </section>
 
-      <section class="bg-gray-800/50 p-4 rounded-xl border border-purple-500/30 flex justify-around items-center space-x-4">
+      <section class="bg-gray-800/50 p-4 rounded-xl border border-purple-500/30 flex flex-wrap justify-around items-center gap-4">
 
         <RouterLink :to="{ name: 'my-games' }" class="text-center px-4 py-2 rounded-lg hover:bg-purple-600/30 transition-colors">
           <div class="text-2xl mb-1">🎮</div>
@@ -196,6 +196,13 @@ const formatTimestamp = (timestamp: number | null) => {
           <div class="font-semibold text-white">Objectifs</div>
           <div class="text-xs text-slate-500">(Bientôt)</div>
         </div>
+
+        <div class="text-center px-4 py-2 opacity-50">
+          <div class="text-2xl mb-1">📃</div>
+          <div class="font-semibold text-white">Forums</div>
+          <div class="text-xs text-slate-500">(Bientôt)</div>
+        </div>
+
       </section>
 
       <section>

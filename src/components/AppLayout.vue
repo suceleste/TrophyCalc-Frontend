@@ -17,12 +17,12 @@ const router = useRouter();
 
 // État pour contrôler l'ouverture du modal de recherche sur mobile
 const isSearchModalOpen = ref(false);
-  
+
 // --- On récupère l'URL de base de l'API ---
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 // On construit l'URL de connexion Steam
 const steamLoginUrl = `${API_BASE_URL}/auth/steam/redirect`;
-  
+
 /**
  * Gère la déconnexion de l'utilisateur.
  * Appelle l'action logout du store et redirige vers l'accueil.
