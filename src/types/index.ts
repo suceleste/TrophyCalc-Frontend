@@ -91,6 +91,7 @@ export interface PublicUserProfile {
   avatar: string;
   profile_url: string;
   total_xp: number;
+  games_completed: number;
   steam_id_64: string;
   created_at: string;
 }
