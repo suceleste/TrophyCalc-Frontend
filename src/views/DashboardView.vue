@@ -141,15 +141,15 @@ const formatTimestamp = (timestamp: number | null) => {
 
       <section class="flex flex-col md:flex-row items-center md:space-x-8 space-y-6 md:space-y-0">
 
-        <div class="flex items-center space-x-4 bg-gray-800/50 p-6 rounded-xl border border-purple-500/30 w-full md:w-auto">
+        <div class="flex items-center space-x-4 bg-gray-800/50 p-6 rounded-xl border border-purple-500/30 w-full md:w-5/12">
           <img :src="(authStore.user as User).avatar" alt="Avatar" class="w-16 h-16 rounded-lg border-2 border-gray-700"/>
-          <div>
+          <div class=" min-w-0 flex-1">
             <h1 class="text-2xl font-bold text-white">{{ (authStore.user as User).name }}</h1>
             <a :href="(authStore.user as User).profile_url" target="_blank" class="text-sm text-purple-400 hover:underline">Voir profil Steam</a>
           </div>
         </div>
 
-        <div class="w-full flex-grow grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="w-full md:w-7/12 grid grid-cols-1 sm:grid-cols-2 gap-6">
 
           <div class="bg-gray-800/50 p-6 rounded-xl border border-purple-500/30 text-center">
             <div class="text-sm text-slate-400 uppercase tracking-wider mb-2">Complétion Globale</div>
