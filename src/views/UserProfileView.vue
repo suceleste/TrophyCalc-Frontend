@@ -1,14 +1,11 @@
 <script setup lang="ts">
-/**
- * Vue pour afficher la page de profil publique d'un utilisateur.
- * Récupère les données depuis l'API backend en utilisant le steam_id_64 fourni dans l'URL.
- */
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
-import { useRoute } from 'vue-router'; // Importe useRoute pour une lecture robuste des props
-import type { PublicUserProfile } from '@/types/index'; // Importe le "contrat"
 
-// Récupère l'URL de base de l'API depuis les variables d'environnement
+import { computed, ref, onMounted } from 'vue';
+import axios from 'axios';
+import { useRoute } from 'vue-router';
+import type { PublicUserProfile } from '@/types/index';
+import { useSeoMeta } from '@unhead/vue';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Utilise defineProps pour recevoir le paramètre d'URL (grâce à `props: true` dans le routeur)
@@ -16,21 +13,8 @@ const props = defineProps<{
   steam_id_64: string;
 }>();
 
-// --- STATE (Variables d'état) ---
-
-/**
- * Stocke les données du profil utilisateur récupérées depuis l'API.
- */
 const userProfile = ref<PublicUserProfile | null>(null);
-
-/**
- * Indique si l'appel API est en cours.
- */
 const isLoading = ref(true);
-
-/**
- * Stocke un message d'erreur en cas d'échec.
- */
 const error = ref<string | null>(null);
 
 // --- Fonctions Utilitaires ---
@@ -48,9 +32,7 @@ const formatDate = (dateString: string): string => {
 
 // --- LIFECYCLE (Au montage du composant) ---
 
-/**
- * Au montage, vérifie le steam_id_64 et lance la récupération du profil.
- */
+
 onMounted(async () => {
   const steamId = props.steam_id_64; // Récupère le SteamID depuis les props
 
@@ -97,6 +79,17 @@ onMounted(async () => {
     isLoading.value = false; // Le chargement est terminé
   }
 });
+
+useSeoMeta({
+  title: computed(() => userProfile.value?.name
+    ? `Profil de ${userProfile.value.name} - Stats & Succès | TrophyCalc`
+    : 'Profil Joueur - TrophyCalc'),
+
+  description: computed(() => `Regardez les statistiques de ${userProfile.value?.name || 'ce joueur'} : jeux complétés, score XP et succès rares sur Steam.`),
+
+  // Pour éviter que Google indexe des profils vides ou buggés
+  robots: computed(() => userProfile.value ? 'index, follow' : 'noindex')
+})
 </script>
 
 <template>

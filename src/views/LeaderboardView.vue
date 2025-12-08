@@ -3,6 +3,14 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import type { LeaderboardUser } from '@/types/index';
+import { useSeoMeta } from '@unhead/vue'
+
+useSeoMeta({
+  title: 'Classement des Chasseurs de Succès - TrophyCalc',
+  description: 'Découvrez le top des meilleurs chasseurs de trophées francophones. Comparez votre score XP et votre nombre de jeux platinés avec la communauté.',
+  ogTitle: 'Qui est le meilleur chasseur de succès ? - TrophyCalc',
+  ogDescription: 'Le classement en temps réel des joueurs Steam français.',
+})
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 

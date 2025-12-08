@@ -1,3 +1,13 @@
+<script setup lang="ts">
+  import { useSeoMeta } from '@unhead/vue'
+
+  useSeoMeta({
+    title: 'Mentions Légales & Confidentialité - TrophyCalc',
+    description: 'Informations légales concernant l\'utilisation de TrophyCalc et l\'API Steam.',
+    robots: 'noindex' // Généralement, on ne veut pas que cette page apparaisse en premier dans Google
+  })
+</script>
+
 <template>
   <div class="space-y-10 max-w-4xl mx-auto">
     <section>

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "20": "^1.0.0",
+    "@unhead/vue": "^2.0.19",
     "axios": "^1.12.2",
     "boostrap": "^2.0.0",
     "pinia": "^3.0.3",

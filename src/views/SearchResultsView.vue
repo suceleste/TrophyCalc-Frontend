@@ -1,15 +1,13 @@
 <script setup lang="ts">
-/**
- * Vue pour afficher les résultats d'une recherche globale (jeux et utilisateurs).
- * Récupère le terme de recherche depuis l'URL et appelle les API backend dédiées.
- */
-import { ref, watch } from 'vue';
+
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import { RouterLink } from 'vue-router';
-import type { GameSearchResult, UserSearchResult } from '@/types/index'; // Importe les contrats
+import type { GameSearchResult, UserSearchResult } from '@/types/index';
+import { useSeoMeta } from '@unhead/vue';
 
-// Récupère l'URL de base de l'API depuis les variables d'environnement
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const route = useRoute();
@@ -112,9 +110,14 @@ watch(
       userError.value = null;
     }
   },
-  { immediate: true } // Lance les fonctions une fois au chargement initial
+  { immediate: true }
 );
 
+useSeoMeta({
+  title: computed(() => `Résultats pour "${currentQuery.value}" - TrophyCalc`),
+  description: 'Recherchez un jeu Steam pour voir ses succès et son score XP.',
+  robots: 'noindex'
+})
 </script>
 
 <template>

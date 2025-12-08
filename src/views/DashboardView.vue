@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useAuthStore } from '@/stores/auth'; // Utilise l'alias @/
 import { RouterLink } from 'vue-router';
 import axios from 'axios';
 import type { User, LatestAchievement, NearlyCompletedGame } from '@/types/index'; // Importe les types
+import { useSeoMeta } from '@unhead/vue';
 
-// URL de base de l'API depuis les variables d'environnement
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const authStore = useAuthStore();
@@ -123,6 +123,11 @@ const formatTimestamp = (timestamp: number | null) => {
   const date = new Date(timestamp * 1000);
   return date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
 };
+
+useSeoMeta({
+  title: 'Mon Tableau de Bord - TrophyCalc',
+  robots: 'noindex, nofollow'
+})
 
 </script>
 

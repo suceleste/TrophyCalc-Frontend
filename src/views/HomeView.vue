@@ -1,3 +1,15 @@
+<script setup lang="ts">
+  import { useSeoMeta } from '@unhead/vue'
+
+  useSeoMeta({
+    title: 'TrophyCalc - Accueil',
+    description: 'Analysez votre profil Steam, calculez votre score XP réel basé sur la rareté des succès, et grimpez dans le classement des chasseurs de trophées.',
+    ogTitle: 'TrophyCalc - Boostez votre profil Steam',
+    ogDescription: 'Vos succès rares valent enfin de l\'XP. Venez calculer votre score.' ,
+    ogType: 'website'
+  })
+</script>
+
 <template>
   <div class="space-y-16 md:space-y-24 py-16 md:py-24">
 

@@ -1,5 +1,11 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router';
+import { useSeoMeta } from '@unhead/vue'
+
+useSeoMeta({
+  title: 'Page Introuvable (404) - TrophyCalc',
+  robots: 'noindex'
+})
 </script>
 
 <template>

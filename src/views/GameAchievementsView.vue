@@ -1,41 +1,34 @@
 <script setup lang="ts">
-/**
- * Vue pour afficher les succès d'un jeu spécifique.
- * Récupère les données depuis l'API, gère le filtrage, le tri et la recherche.
- */
+
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
-import { useAuthStore } from '@/stores/auth'; // Utilise l'alias @/
-import type { Achievement } from '@/types/index'; // Importe le type "contrat"
+import { useAuthStore } from '@/stores/auth';
+import type { Achievement } from '@/types/index';
+import { useSeoMeta } from '@unhead/vue';
 
-// Récupère l'URL de base de l'API depuis les variables d'environnement
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// --- Outils ---
+
 const route = useRoute();
 const authStore = useAuthStore();
 
-// --- STATE (Variables d'état) ---
-const allAchievements = ref<Achievement[]>([]); // Stocke tous les succès bruts (typé)
+const allAchievements = ref<Achievement[]>([]);
 const gameName = ref<string | null>(null);
 const totalCount = ref(0);
 const unlockedCount = ref(0);
 const isLoading = ref(true);
 const error = ref<string | null>(null);
 
-// Variables d'état pour les contrôles
+
 const currentFilter = ref<'all' | 'unlocked' | 'locked'>('all');
 const currentSort = ref<'default' | 'name_asc' | 'name_desc' | 'date_asc' | 'date_desc' | 'rarity_asc' | 'rarity_desc'>('default');
 const searchQuery = ref('');
 
-// Récupérer l'app_id depuis l'URL de manière sécurisée
 const appId = computed(() => {
   const id = route.params.app_id;
   return Array.isArray(id) ? id[0] : id;
 });
-
-// --- Fonctions Utilitaires ---
 
 /**
  * Formate un timestamp Unix en date française lisible.
@@ -48,23 +41,19 @@ const formatTimestamp = (timestamp: number | null): string => {
   return date.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-// --- COMPUTED (Propriétés calculées) ---
-
 /**
  * Calcule la liste des succès à afficher en fonction des filtres,
  * de la recherche et du tri sélectionnés.
  */
 const displayedAchievements = computed((): Achievement[] => {
-  let list: Achievement[] = [...allAchievements.value]; // Commence avec une copie
+  let list: Achievement[] = [...allAchievements.value];
 
-  // 1. Filtrer par statut (Tous/Débloqués/Verrouillés)
   if (currentFilter.value === 'unlocked') {
     list = list.filter(ach => ach.achieved);
   } else if (currentFilter.value === 'locked') {
     list = list.filter(ach => !ach.achieved);
   }
 
-  // 2. Filtrer par recherche (sur le nom ou la description)
   const query = searchQuery.value.toLowerCase().trim();
   if (query) {
     list = list.filter(ach =>
@@ -73,17 +62,15 @@ const displayedAchievements = computed((): Achievement[] => {
     );
   }
 
-  // 3. Trier la liste résultante
-  // On crée une nouvelle copie pour le tri pour ne pas muter la liste filtrée
   const sortedList = [...list];
   switch (currentSort.value) {
-    case 'name_asc': // A-Z
+    case 'name_asc':
       sortedList.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       break;
-    case 'name_desc': // Z-A
+    case 'name_desc':
       sortedList.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
       break;
-    case 'date_desc': // Plus récent
+    case 'date_desc':
       sortedList.sort((a, b) => {
           const timeA = a.achieved ? a.unlock_time : -1;
           const timeB = b.achieved ? b.unlock_time : -1;
@@ -91,7 +78,7 @@ const displayedAchievements = computed((): Achievement[] => {
           return timeB - timeA;
       });
       break;
-    case 'date_asc': // Plus ancien
+    case 'date_asc':
       sortedList.sort((a, b) => {
           const timeA = a.achieved ? a.unlock_time : Infinity;
           const timeB = b.achieved ? b.unlock_time : Infinity;
@@ -99,42 +86,33 @@ const displayedAchievements = computed((): Achievement[] => {
           return timeA - timeB;
       });
       break;
-    case 'rarity_desc': // Plus rare (% ascendant)
+    case 'rarity_desc':
        sortedList.sort((a, b) => {
-           const percentA = a.percent ?? 101; // 101 si null (fin)
+           const percentA = a.percent ?? 101;
            const percentB = b.percent ?? 101;
            if (percentA === percentB) return (a.name || '').localeCompare(b.name || '');
            return percentA - percentB;
        });
        break;
-    case 'rarity_asc': // Moins rare (% descendant)
+    case 'rarity_asc':
        sortedList.sort((a, b) => {
-           const percentA = a.percent ?? -1; // -1 si null (début)
+           const percentA = a.percent ?? -1;
            const percentB = b.percent ?? -1;
            if (percentA === percentB) return (a.name || '').localeCompare(b.name || '');
            return percentB - percentA;
        });
        break;
-    // case 'default':
-    //   L'API renvoie déjà trié par débloqué en premier,
-    //   donc on n'applique pas de tri supplémentaire.
   }
   return sortedList;
 });
 
-// --- LIFECYCLE (Au montage du composant) ---
-
-/**
- * Au montage, vérifie l'authentification et l'AppID, puis
- * lance la récupération des succès du jeu.
- */
 onMounted(async () => {
   if (!authStore.token) {
     error.value = "Erreur: Authentification requise.";
     isLoading.value = false;
     return;
   }
-  if (!appId.value) { // Utilise .value car appId est un computed
+  if (!appId.value) {
     error.value = "Erreur: ID de l'application manquant dans l'URL.";
     isLoading.value = false;
     return;
@@ -156,15 +134,14 @@ onMounted(async () => {
       }
     });
 
-    // Mise à jour de l'état avec les données reçues
-    // On type la réponse pour plus de sécurité
+
     const data = response.data as {
         status: string;
         game_name: string;
         achievements: Achievement[];
         total_count: number;
         unlocked_count: number;
-        message?: string; // Pour les erreurs 'info'
+        message?: string;
     };
 
     if (data.status === 'success') {
@@ -173,7 +150,6 @@ onMounted(async () => {
         totalCount.value = data.total_count || 0;
         unlockedCount.value = data.unlocked_count || 0;
     } else if (data.status === 'info') {
-        // Gère les cas où l'API renvoie une info (ex: pas de succès)
         error.value = data.message || 'Succès non disponibles pour ce jeu.';
         allAchievements.value = [];
     }
@@ -185,7 +161,6 @@ onMounted(async () => {
   } catch (err: unknown) {
     console.error(`[GameAchievementsView] Erreur lors de la récupération des succès pour ${appId.value}:`, err);
     if (axios.isAxiosError(err) && err.response) {
-      // Si l'API renvoie une erreur 'info' (comme profil privé)
       if (err.response.data.status === 'info') {
          error.value = err.response.data.message;
       } else {
@@ -199,6 +174,14 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+useSeoMeta({
+  title: computed(() => gameName.value
+    ? `${gameName.value} - Liste des Succès & XP | TrophyCalc`
+    : 'Succès Steam - TrophyCalc'),
+
+  description: computed(() => `Guide des succès pour ${gameName.value}. Découvrez la valeur en XP de chaque trophée et leur rareté.`),
+})
 </script>
 
 <template>

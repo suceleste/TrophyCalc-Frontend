@@ -6,9 +6,10 @@
  */
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
-import { useAuthStore } from '@/stores/auth'; // Utilise l'alias @/
+import { useAuthStore } from '@/stores/auth';
 import { RouterLink } from 'vue-router';
-import type { SteamGame } from '@/types/index'; // Importe le type "contrat"
+import type { SteamGame } from '@/types/index';
+import { useSeoMeta } from '@unhead/vue';
 
 // Récupère l'URL de base de l'API depuis les variables d'environnement
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -114,6 +115,11 @@ const filteredGames = computed((): SteamGame[] => {
     game.name.toLowerCase().includes(query)
   );
 });
+
+useSeoMeta({
+  title: 'Ma Bibliothèque - TrophyCalc',
+  robots: 'noindex, nofollow'
+})
 
 </script>
 
