@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Bloquer les parties privées du site (inutiles pour Google)
+Disallow: /dashboard
+Disallow: /my-games
+Disallow: /admin
+Disallow: /login
+Disallow: /auth/
+
+# Indiquer le plan du site (Génère-le si tu peux, sinon laisse la ligne commentée pour l'instant)
+Sitemap: https://api.trophycalc.com/sitemap.xml
